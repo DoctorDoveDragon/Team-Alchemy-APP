@@ -1,0 +1,44 @@
+[
+  {
+    "id": "apa",
+    "name": "APA",
+    "fullName": "American Psychological Association",
+    "version": "7th Edition",
+    "description": "Used primarily in psychology, education, and social sciences"
+  },
+  {
+    "id": "mla",
+    "name": "MLA",
+    "fullName": "Modern Language Association",
+    "version": "9th Edition",
+    "description": "Common in humanities, literature, and language studies"
+  },
+  {
+    "id": "chicago",
+    "name": "Chicago",
+    "fullName": "Chicago Manual of Style",
+    "version": "17th Edition",
+    "description": "Used in history, arts, and some social sciences"
+  },
+  {
+    "id": "harvard",
+    "name": "Harvard",
+    "fullName": "Harvard Referencing",
+    "version": "Standard",
+    "description": "Popular in UK universities and various disciplines"
+  },
+  {
+    "id": "ieee",
+    "name": "IEEE",
+    "fullName": "Institute of Electrical and Electronics Engineers",
+    "version": "Current",
+    "description": "Standard for engineering and computer science"
+  },
+  {
+    "id": "vancouver",
+    "name": "Vancouver",
+    "fullName": "Vancouver System",
+    "version": "Current",
+    "description": "Used in medical and scientific publications"
+  }
+]

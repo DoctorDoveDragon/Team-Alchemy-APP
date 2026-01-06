@@ -1,196 +1,143 @@
-# Team Alchemy
+# Team Alchemy APP
 
-A comprehensive team dynamics and psychological assessment platform that combines modern psychology with data-driven insights.
+A comprehensive academic and team collaboration platform combining modern web technologies with data-driven insights.
 
-## Features
+## Overview
 
-- **🧠 Psychological Assessment**: Multi-dimensional personality profiling based on established psychological frameworks
-- **👥 Team Analysis**: Comprehensive team composition and dynamics analysis
-- **🎯 Archetype Classification**: Automatic classification into personality archetypes
-- **🔮 Predictive Insights**: ML-powered predictions for team performance and compatibility
-- **📊 Data-Driven Recommendations**: Actionable recommendations for team improvement
-- **🔬 Deep Psychology Integration**: Jungian, Freudian, and shadow work frameworks
+Team Alchemy APP is a full-stack application scaffold featuring:
+- **Frontend**: React + Vite + Tailwind CSS
+- **Backend**: FastAPI + SQLModel + PostgreSQL
+- **Infrastructure**: Docker Compose, Nginx, Redis
+- **CI/CD**: GitHub Actions workflow
 
 ## Quick Start
 
 ### Prerequisites
 
-- Python 3.9 or higher
-- pip package manager
+- Docker and Docker Compose
+- Node.js 18+ (for local frontend development)
+- Python 3.11+ (for local backend development)
 
-### Installation
+### Running with Docker Compose
 
 ```bash
 # Clone the repository
 git clone https://github.com/DoctorDoveDragon/Team-Alchemy-APP.git
 cd Team-Alchemy-APP
 
-# Install dependencies
+# Copy environment file and configure secrets
+cp .env.example .env
+# Edit .env and set JWT_SECRET and other secrets
+
+# Start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+```
+
+Services will be available at:
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:5000
+- API Documentation: http://localhost:5000/docs
+- PostgreSQL: localhost:5432
+- Redis: localhost:6379
+
+### Running Locally
+
+#### Backend
+
+```bash
+cd server
 pip install -r requirements.txt
+pip install -r requirements-dev.txt
 
-# Install the package
-pip install -e .
+# Set environment variables
+export DATABASE_URL="postgresql://teamalchemy:teamalchemy@localhost:5432/teamalchemy"
+export JWT_SECRET="your-secret-key-here"
+
+# Run the server
+uvicorn app.main:app --reload --port 5000
 ```
 
-### Initialize Database
+#### Frontend
 
 ```bash
-# Using CLI
-team-alchemy init
-
-# Or using script
-python scripts/setup_database.py
+cd frontend
+npm install
+npm run dev
 ```
 
-### Run the Application
+The frontend will be available at http://localhost:3000
 
-```bash
-# Start the API server
-uvicorn main:app --reload
+## Project Structure
 
-# Or using Make
-make run
 ```
-
-The API will be available at `http://localhost:8000`
-
-API documentation at `http://localhost:8000/docs`
-
-## Usage
-
-### Python API
-
-```python
-from team_alchemy.core.archetypes.traits import TraitProfile
-from team_alchemy.core.archetypes.classifier_logic import ArchetypeClassifier
-
-# Create a trait profile
-profile = TraitProfile()
-profile.add_score("Extraversion", 75.0)
-profile.add_score("Analytical Thinking", 85.0)
-
-# Classify into archetype
-classifier = ArchetypeClassifier()
-result = classifier.classify(profile)
-
-print(f"Primary Archetype: {result.primary_archetype.value}")
-print(f"Confidence: {result.confidence:.2%}")
+.
+├── frontend/              # React + Vite frontend
+│   ├── src/
+│   │   ├── components/   # React components
+│   │   ├── data/         # Sample data
+│   │   └── main.jsx      # Entry point
+│   └── package.json
+├── server/               # FastAPI backend
+│   ├── app/
+│   │   ├── main.py       # FastAPI app
+│   │   ├── models.py     # SQLModel models
+│   │   ├── routes.py     # API routes
+│   │   └── auth.py       # Authentication
+│   └── tests/
+├── .github/
+│   └── workflows/
+│       └── ci.yml        # CI workflow
+├── docker-compose.yml    # Docker services
+├── nginx.conf            # Nginx configuration
+└── .env.example          # Environment variables template
 ```
-
-### REST API
-
-```bash
-# Create an assessment
-curl -X POST http://localhost:8000/assessments/ \
-  -H "Content-Type: application/json" \
-  -d '{"title": "Team Assessment", "description": "Initial assessment"}'
-
-# Analyze a team
-curl http://localhost:8000/analysis/team/1
-```
-
-### CLI
-
-```bash
-# Initialize database
-team-alchemy init
-
-# Run an assessment
-team-alchemy assess 101
-
-# Analyze a team
-team-alchemy analyze-team 1
-
-# Get recommendations
-team-alchemy recommend 1
-```
-
-## Architecture
-
-### Core Modules
-
-- **archetypes**: Personality type definitions and classification
-- **assessment**: Assessment models, calculators, and validators
-- **psychology**: Jungian, Freudian, and shadow work frameworks
-- **scoring**: Composite scoring algorithms
-- **utils**: Metrics and data transformers
-
-### API Layer
-
-- **routes**: RESTful API endpoints
-- **middleware**: Authentication and validation
-
-### Intelligence
-
-- **optimizers**: Team composition optimization algorithms
-- **predictors**: ML-based outcome prediction models
-
-### Data Layer
-
-- **models**: SQLAlchemy ORM models
-- **repository**: Database session management
 
 ## Development
 
-### Setup Development Environment
+### Backend Tests
 
 ```bash
-# Install development dependencies
-pip install -r requirements-dev.txt
-
-# Install pre-commit hooks
-pre-commit install
+cd server
+pytest tests/
 ```
 
-### Run Tests
+### Frontend Tests
 
 ```bash
-# All tests with coverage
-make test
-
-# Unit tests only
-make test-unit
-
-# Integration tests only
-make test-integration
+cd frontend
+npm test
 ```
 
-### Code Quality
+### Running CI Locally
 
-```bash
-# Format code
-make format
+The CI workflow runs on push and pull requests. It:
+1. Installs backend dependencies
+2. Runs backend tests with pytest
+3. Installs frontend dependencies
+4. Builds frontend application
 
-# Run linters
-make lint
-```
+## Environment Variables
 
-### Docker
+Copy `.env.example` to `.env` and configure:
 
-```bash
-# Start all services
-make docker-up
+- `JWT_SECRET`: Secret key for JWT tokens (REQUIRED - must be set by repository owners)
+- `DATABASE_URL`: PostgreSQL connection string
+- `REDIS_URL`: Redis connection string
+- `ENVIRONMENT`: development/production
 
-# View logs
-make docker-logs
+**Note**: Secrets are not set in this repository. Repository owners must add JWT_SECRET and other sensitive values.
 
-# Stop services
-make docker-down
-```
+## API Endpoints
 
-## Documentation
+- `GET /healthz` - Health check endpoint
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login
+- `POST /api/documents` - Create document
 
-- [Getting Started Guide](docs/guides/getting_started.md)
-- [API Reference](docs/api/reference.md)
-- [Architecture Overview](docs/index.md)
-
-## Examples
-
-See the [examples](examples/) directory for:
-
-- Basic usage examples
-- Team analysis examples
-- Sample data
+Full API documentation available at http://localhost:5000/docs
 
 ## Contributing
 
@@ -204,16 +151,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For issues and questions, please use the [GitHub issue tracker](https://github.com/DoctorDoveDragon/Team-Alchemy-APP/issues).
 
-## Acknowledgments
-
-Built with modern Python frameworks:
-
-- FastAPI for the REST API
-- SQLAlchemy for database ORM
-- Pydantic for data validation
-- Celery for async task processing
-- pytest for testing
-
 ---
 
-**Team Alchemy** - Transforming team dynamics through psychological insights
+**Team Alchemy APP** - Modern full-stack application scaffold

@@ -1,0 +1,41 @@
+[
+  {
+    "id": 1,
+    "user_id": 101,
+    "archetype": "leader",
+    "trait_scores": {
+      "Extraversion": 85,
+      "Decisiveness": 90,
+      "Confidence": 88,
+      "Strategic Thinking": 87
+    },
+    "jungian_type": "ENTJ",
+    "timestamp": "2024-01-15T10:00:00Z"
+  },
+  {
+    "id": 2,
+    "user_id": 102,
+    "archetype": "analyst",
+    "trait_scores": {
+      "Analytical Thinking": 92,
+      "Detail Orientation": 88,
+      "Logical Reasoning": 90,
+      "Problem Solving": 89
+    },
+    "jungian_type": "INTJ",
+    "timestamp": "2024-01-15T11:00:00Z"
+  },
+  {
+    "id": 3,
+    "user_id": 103,
+    "archetype": "harmonizer",
+    "trait_scores": {
+      "Empathy": 90,
+      "Communication": 85,
+      "Collaboration": 88,
+      "Emotional Intelligence": 91
+    },
+    "jungian_type": "ENFJ",
+    "timestamp": "2024-01-15T12:00:00Z"
+  }
+]

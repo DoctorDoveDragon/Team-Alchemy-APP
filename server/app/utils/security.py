@@ -9,6 +9,12 @@ import bcrypt
 def _truncate_to_bcrypt_bytes(password: str) -> bytes:
     """Encode password to UTF-8 and truncate to bcrypt's 72-byte limit.
     
+    Note: This function truncates at byte boundaries, which may split multi-byte
+    UTF-8 characters. This is intentional and safe because:
+    1. Bcrypt operates on bytes, not characters
+    2. We consistently apply the same truncation for both hashing and verification
+    3. The resulting bytes are never decoded back to a string
+    
     Args:
         password: The plain text password to encode and truncate
         

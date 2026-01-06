@@ -1,30 +1,40 @@
-"""Security utilities for password hashing and verification."""
-import bcrypt
+"""Security utilities for password hashing and verification.
 
-MAX_BCRYPT_BYTES = 72
+This module provides utilities for safely hashing and verifying passwords
+with bcrypt, ensuring compliance with bcrypt's 72-byte password limit.
+"""
+import bcrypt
 
 
 def _truncate_to_bcrypt_bytes(password: str) -> bytes:
-    """
-    Encode password as UTF-8 and truncate to bcrypt's 72-byte limit.
-    Ensures truncation happens at character boundaries to avoid splitting multi-byte characters.
-    """
-    password_bytes = password.encode("utf-8")
-    if len(password_bytes) <= MAX_BCRYPT_BYTES:
-        return password_bytes
+    """Encode password to UTF-8 and truncate to bcrypt's 72-byte limit.
     
-    # Truncate at character boundary by decoding back and re-encoding
-    # This prevents splitting multi-byte UTF-8 characters
-    truncated = password_bytes[:MAX_BCRYPT_BYTES]
-    # Decode with 'ignore' to drop incomplete multi-byte sequences at the end
-    truncated_str = truncated.decode("utf-8", errors="ignore")
-    return truncated_str.encode("utf-8")
+    Note: This function truncates at byte boundaries, which may split multi-byte
+    UTF-8 characters. This is intentional and safe because:
+    1. Bcrypt operates on bytes, not characters
+    2. We consistently apply the same truncation for both hashing and verification
+    3. The resulting bytes are never decoded back to a string
+    
+    Args:
+        password: The plain text password to encode and truncate
+        
+    Returns:
+        The password encoded as UTF-8 bytes, truncated to 72 bytes if necessary
+    """
+    b = password.encode("utf-8")
+    if len(b) > 72:
+        b = b[:72]
+    return b
 
 
 def hash_password(password: str) -> str:
-    """
-    Hash a password using bcrypt after truncating to 72 bytes.
-    Returns the hashed password as a UTF-8 string.
+    """Hash a password using bcrypt.
+    
+    Args:
+        password: The plain text password to hash
+        
+    Returns:
+        The bcrypt hashed password as a UTF-8 string
     """
     pw_bytes = _truncate_to_bcrypt_bytes(password)
     hashed = bcrypt.hashpw(pw_bytes, bcrypt.gensalt())
@@ -32,9 +42,14 @@ def hash_password(password: str) -> str:
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """
-    Verify a plain password against a bcrypt hash.
-    Applies the same truncation logic before verification.
+    """Verify a password against a bcrypt hash.
+    
+    Args:
+        plain_password: The plain text password to verify
+        hashed_password: The bcrypt hashed password to verify against
+        
+    Returns:
+        True if the password matches the hash, False otherwise
     """
     pw_bytes = _truncate_to_bcrypt_bytes(plain_password)
     return bcrypt.checkpw(pw_bytes, hashed_password.encode("utf-8"))

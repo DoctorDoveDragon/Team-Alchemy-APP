@@ -1,1 +1,1 @@
-"""Utility modules for the Team Alchemy app."""
+"""Utility modules for the application."""

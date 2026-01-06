@@ -7,7 +7,8 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
 from app.schemas import TokenData
-from app.utils.security import hash_password, verify_password as verify_pwd
+from app.utils.security import hash_password as _hash_password
+from app.utils.security import verify_password as _verify_password
 
 # Configuration
 SECRET_KEY = os.getenv("JWT_SECRET", "your-secret-key-change-in-production")
@@ -20,12 +21,12 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against a hash"""
-    return verify_pwd(plain_password, hashed_password)
+    return _verify_password(plain_password, hashed_password)
 
 
 def get_password_hash(password: str) -> str:
     """Hash a password"""
-    return hash_password(password)
+    return _hash_password(password)
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:

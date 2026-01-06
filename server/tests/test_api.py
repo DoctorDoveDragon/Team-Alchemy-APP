@@ -1,5 +1,5 @@
 import pytest
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 from sqlmodel import Session, create_engine, SQLModel
 from sqlmodel.pool import StaticPool
 
@@ -29,7 +29,7 @@ async def client_fixture(session: Session):
 
     app.dependency_overrides[get_session] = get_session_override
     
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         yield client
     
     app.dependency_overrides.clear()

@@ -4,7 +4,10 @@ Main FastAPI application entry point.
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from team_alchemy.api.routes import assessment, analysis, teams
 from team_alchemy.api.middleware.auth import AuthMiddleware
@@ -87,6 +90,55 @@ async def health():
         "status": "healthy",
         "version": settings.app_version,
     }
+
+
+# Setup static file serving for frontend after all API routes
+def setup_static_files():
+    """Setup static file serving for the frontend."""
+    static_dir = Path(__file__).parent / "static"
+    if static_dir.exists():
+        # Cache resolved static directory path for security checks
+        resolved_static_dir = static_dir.resolve()
+        
+        # Mount assets directory if it exists
+        assets_dir = static_dir / "assets"
+        if assets_dir.exists():
+            app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="static-assets")
+        
+        @app.get("/{full_path:path}")
+        async def serve_frontend(full_path: str):
+            """Serve frontend application
+            
+            Note: This catch-all route is registered after all API routes to ensure
+            API routes take precedence. Any future API routes should be registered
+            before this catch-all handler.
+            """
+            # Prevent path traversal attacks
+            try:
+                file_path = (static_dir / full_path).resolve()
+                # Ensure the resolved path is within static_dir
+                file_path.relative_to(resolved_static_dir)
+            except (ValueError, OSError):
+                # Path is outside static directory or filesystem error
+                index_path = static_dir / "index.html"
+                if index_path.exists():
+                    return FileResponse(index_path)
+                return {"message": "Frontend not built"}
+            
+            # If requesting a file that exists, serve it
+            if file_path.is_file():
+                return FileResponse(file_path)
+            
+            # Otherwise, serve index.html for client-side routing
+            index_path = static_dir / "index.html"
+            if index_path.exists():
+                return FileResponse(index_path)
+            
+            return {"message": "Frontend not built"}
+
+
+# Call setup_static_files after all API routes are registered
+setup_static_files()
 
 
 if __name__ == "__main__":

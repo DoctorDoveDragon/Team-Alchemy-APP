@@ -152,7 +152,7 @@ def setup_static_files():
                 file_path = (static_dir / full_path).resolve()
                 # Ensure the resolved path is within static_dir
                 file_path.relative_to(resolved_static_dir)
-            except ValueError as e:
+            except ValueError:
                 # Path is outside static directory - serve index.html for client-side routing
                 logger.debug(f"Path outside static dir or not found: {full_path}, serving index.html")
                 index_path = static_dir / "index.html"

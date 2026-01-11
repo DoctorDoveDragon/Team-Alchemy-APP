@@ -30,6 +30,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy setup files and source code
 COPY pyproject.toml setup.py ./
+COPY README.md ./
 COPY src/ ./src/
 COPY config/ ./config/
 COPY main.py ./

@@ -88,3 +88,13 @@ def test_settings_boolean_parsing(monkeypatch):
     
     assert settings.debug is True
     assert settings.enable_ml is False
+
+
+def test_settings_invalid_port_fallback(monkeypatch):
+    """Test that invalid PORT values fall back to default."""
+    monkeypatch.setenv("PORT", "invalid-port")
+    
+    settings = Settings()
+    
+    # Should fall back to default port of 8000
+    assert settings.api_port == 8000

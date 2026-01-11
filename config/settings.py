@@ -3,13 +3,16 @@ Application settings and configuration.
 """
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field, field_validator, ValidationInfo
-from typing import Optional, List, Union
+from pydantic import Field, field_validator
+from typing import Optional, List, Union, ClassVar
 import os
 
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
+    
+    # Constants
+    DEFAULT_REDIS_URL: ClassVar[str] = "redis://localhost:6379/0"
     
     # Application
     app_name: str = Field(default="Team Alchemy", validation_alias="APP_NAME")
@@ -28,8 +31,8 @@ class Settings(BaseSettings):
     database_echo: bool = Field(default=False, validation_alias="DATABASE_ECHO")
     
     # Redis/Celery
-    celery_broker_url: str = Field(default="redis://localhost:6379/0")
-    celery_result_backend: str = Field(default="redis://localhost:6379/0")
+    celery_broker_url: str = Field(default=DEFAULT_REDIS_URL)
+    celery_result_backend: str = Field(default=DEFAULT_REDIS_URL)
     
     # Security
     secret_key: str = Field(default="your-secret-key-change-in-production", validation_alias="SECRET_KEY")
@@ -71,42 +74,57 @@ class Settings(BaseSettings):
         # Check PORT environment variable (Railway)
         port = os.getenv("PORT")
         if port:
-            return int(port)
+            try:
+                return int(port)
+            except (ValueError, TypeError):
+                pass  # Fall through to use provided value or API_PORT
+        
         # Otherwise use the provided value or API_PORT
         if v is not None:
-            return int(v) if not isinstance(v, int) else v
+            try:
+                return int(v) if not isinstance(v, int) else v
+            except (ValueError, TypeError):
+                pass
+        
         api_port = os.getenv("API_PORT")
         if api_port:
-            return int(api_port)
+            try:
+                return int(api_port)
+            except (ValueError, TypeError):
+                pass
+        
         return 8000
+    
+    @classmethod
+    def _get_redis_based_url(cls, env_var_name: str, default_value: str) -> str:
+        """Helper method to get Redis-based URL with fallback to REDIS_URL."""
+        # Check specific environment variable first
+        specific_url = os.getenv(env_var_name)
+        if specific_url:
+            return specific_url
+        
+        # Fall back to REDIS_URL if available
+        redis_url = os.getenv("REDIS_URL")
+        if redis_url:
+            return redis_url
+        
+        return default_value
     
     @field_validator('celery_broker_url', mode='before')
     @classmethod
     def parse_celery_broker(cls, v):
         """Parse Celery broker URL, using REDIS_URL if available."""
-        if v is not None and v != "redis://localhost:6379/0":
+        if v is not None and v != cls.DEFAULT_REDIS_URL:
             return v
-        celery_broker = os.getenv("CELERY_BROKER_URL")
-        if celery_broker:
-            return celery_broker
-        redis_url = os.getenv("REDIS_URL")
-        if redis_url:
-            return redis_url
-        return v if v is not None else "redis://localhost:6379/0"
+        return cls._get_redis_based_url("CELERY_BROKER_URL", cls.DEFAULT_REDIS_URL)
     
     @field_validator('celery_result_backend', mode='before')
     @classmethod
     def parse_celery_result(cls, v):
         """Parse Celery result backend, using REDIS_URL if available."""
-        if v is not None and v != "redis://localhost:6379/0":
+        if v is not None and v != cls.DEFAULT_REDIS_URL:
             return v
-        celery_result = os.getenv("CELERY_RESULT_BACKEND")
-        if celery_result:
-            return celery_result
-        redis_url = os.getenv("REDIS_URL")
-        if redis_url:
-            return redis_url
-        return v if v is not None else "redis://localhost:6379/0"
+        return cls._get_redis_based_url("CELERY_RESULT_BACKEND", cls.DEFAULT_REDIS_URL)
 
 
 # Global settings instance

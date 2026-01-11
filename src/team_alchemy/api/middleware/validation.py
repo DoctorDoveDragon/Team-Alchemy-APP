@@ -2,29 +2,35 @@
 Request validation middleware.
 """
 
-from fastapi import Request, HTTPException
-from typing import Any, Dict
-import json
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.responses import JSONResponse
+from typing import Any, Dict, List
+from fastapi import HTTPException
 
 
-class ValidationMiddleware:
+class ValidationMiddleware(BaseHTTPMiddleware):
     """Middleware for request validation."""
     
-    def __init__(self, max_request_size: int = 10 * 1024 * 1024):  # 10MB
+    def __init__(self, app, max_request_size: int = 10 * 1024 * 1024):  # 10MB
+        super().__init__(app)
         self.max_request_size = max_request_size
         
-    async def __call__(self, request: Request, call_next):
+    async def dispatch(self, request: Request, call_next):
         """Process and validate request."""
         # Check request size
         content_length = request.headers.get("content-length")
         if content_length and int(content_length) > self.max_request_size:
-            raise HTTPException(status_code=413, detail="Request too large")
+            return JSONResponse(
+                status_code=413,
+                content={"detail": "Request too large"}
+            )
             
         response = await call_next(request)
         return response
 
 
-def validate_request_data(data: Dict[str, Any], required_fields: list[str]) -> bool:
+def validate_request_data(data: Dict[str, Any], required_fields: List[str]) -> bool:
     """
     Validate that required fields are present in request data.
     

@@ -72,9 +72,20 @@ app.include_router(
 )
 
 
-@app.get("/health")
+@app.get("/healthz")
 async def health():
     """Health check endpoint."""
+    return {
+        "name": settings.app_name,
+        "version": settings.app_version,
+        "status": "healthy",
+        "docs": "/docs",
+    }
+
+
+@app.get("/health")
+async def health_legacy():
+    """Legacy health check endpoint."""
     return {
         "name": settings.app_name,
         "version": settings.app_version,
@@ -88,6 +99,7 @@ def setup_static_files():
     """Setup static file serving for the frontend."""
     static_dir = Path(__file__).parent / "static"
     if static_dir.exists():
+        logger.info(f"Setting up static files from {static_dir}")
         # Cache resolved static directory path for security checks
         resolved_static_dir = static_dir.resolve()
         
@@ -127,15 +139,17 @@ def setup_static_files():
             
             return {"message": "Frontend not built"}
     else:
+        logger.warning(f"Static directory not found at {static_dir}")
         # If no static files exist, add a root endpoint for the API
         @app.get("/")
         async def root():
-            """Root endpoint."""
+            """Root endpoint when no static files are available."""
             return {
                 "name": settings.app_name,
                 "version": settings.app_version,
                 "status": "running",
                 "docs": "/docs",
+                "message": "Frontend not built yet"
             }
 
 

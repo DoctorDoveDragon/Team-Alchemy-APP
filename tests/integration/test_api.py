@@ -14,18 +14,41 @@ def test_placeholder():
     assert True
 
 
-# Uncomment when main.py is created
-# @pytest.fixture
-# def client():
-#     """Create test client."""
-#     from main import app
-#     return TestClient(app)
+@pytest.fixture
+def client():
+    """Create test client."""
+    from main import app
+    return TestClient(app)
 
 
-# def test_health_endpoint(client):
-#     """Test health check endpoint."""
-#     response = client.get("/health")
-#     assert response.status_code == 200
+def test_healthz_endpoint(client):
+    """Test Railway health check endpoint."""
+    response = client.get("/healthz")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "healthy"
+    assert "name" in data
+    assert "version" in data
+    assert data["docs"] == "/docs"
+
+
+def test_health_endpoint(client):
+    """Test legacy health check endpoint."""
+    response = client.get("/health")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "running"
+    assert "name" in data
+    assert "version" in data
+    assert data["docs"] == "/docs"
+
+
+def test_root_endpoint(client):
+    """Test root endpoint."""
+    response = client.get("/")
+    assert response.status_code == 200
+    # Could be either static files or JSON response
+    # Just verify we get a response
 
 
 # def test_create_assessment(client):

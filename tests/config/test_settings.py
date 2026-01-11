@@ -2,7 +2,6 @@
 Unit tests for settings configuration.
 """
 
-import os
 import pytest
 from config.settings import Settings, get_settings
 

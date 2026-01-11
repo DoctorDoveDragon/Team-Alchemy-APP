@@ -31,8 +31,8 @@ class Settings(BaseSettings):
     database_echo: bool = Field(default=False, validation_alias="DATABASE_ECHO")
     
     # Redis/Celery
-    celery_broker_url: str = Field(default=DEFAULT_REDIS_URL)
-    celery_result_backend: str = Field(default=DEFAULT_REDIS_URL)
+    celery_broker_url: str = Field(default="redis://localhost:6379/0")
+    celery_result_backend: str = Field(default="redis://localhost:6379/0")
     
     # Security
     secret_key: str = Field(default="your-secret-key-change-in-production", validation_alias="SECRET_KEY")

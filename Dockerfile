@@ -24,15 +24,29 @@ RUN apt-get update && apt-get install -y \
     postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy server requirements and install
-COPY server/requirements.txt .
+# Copy package configuration files
+COPY requirements.txt .
+COPY setup.py .
+COPY pyproject.toml .
+COPY README.md .
+
+# Install root requirements
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy server application code
-COPY server/ ./server/
+# Copy source code and config
+COPY src/ ./src/
+COPY config/ ./config/
+COPY main.py .
 
-# Copy built frontend from previous stage
-COPY --from=frontend-build /frontend/dist ./server/static
+# Install the team_alchemy package
+RUN pip install --no-cache-dir -e .
+
+# Copy built frontend from previous stage to static directory
+RUN mkdir -p ./static
+COPY --from=frontend-build /frontend/dist ./static
+
+# Set PYTHONPATH to include src directory
+ENV PYTHONPATH="${PYTHONPATH}:/app/src:/app"
 
 # Create non-root user
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
@@ -43,4 +57,4 @@ EXPOSE 8000
 
 # Use shell form to properly expand $PORT environment variable at runtime
 # Railway sets PORT dynamically, so we need shell expansion
-CMD sh -c "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --app-dir server"
+CMD sh -c "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"

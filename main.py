@@ -73,18 +73,8 @@ app.include_router(
 
 
 @app.get("/health")
-@app.get("/healthz")
 async def health():
     """Health check endpoint."""
-    return {
-        "status": "healthy",
-        "version": settings.app_version,
-    }
-
-
-@app.get("/api")
-async def api_root():
-    """API root endpoint."""
     return {
         "name": settings.app_name,
         "version": settings.app_version,
@@ -93,63 +83,64 @@ async def api_root():
     }
 
 
-# Serve static files (frontend) - must be registered after API routes
-static_dir = Path(__file__).parent / "static"
-if static_dir.exists():
-    # Cache resolved static directory path for security checks
-    resolved_static_dir = static_dir.resolve()
-    
-    # Mount assets directory if it exists
-    assets_dir = static_dir / "assets"
-    if assets_dir.exists():
-        app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="static-assets")
-    
-    @app.get("/{full_path:path}")
-    async def serve_frontend(full_path: str):
-        """Serve frontend application
+# Setup static file serving for frontend after all API routes
+def setup_static_files():
+    """Setup static file serving for the frontend."""
+    static_dir = Path(__file__).parent / "static"
+    if static_dir.exists():
+        # Cache resolved static directory path for security checks
+        resolved_static_dir = static_dir.resolve()
         
-        Note: This catch-all route is registered after all API routes to ensure
-        API routes take precedence. Any future API routes should be registered
-        before this catch-all handler.
-        """
-        # Prevent path traversal attacks
-        try:
-            file_path = (static_dir / full_path).resolve()
-            # Ensure the resolved path is within static_dir (Python 3.9+)
-            if not file_path.is_relative_to(resolved_static_dir):
-                # Path is outside static directory
+        # Mount assets directory if it exists
+        assets_dir = static_dir / "assets"
+        if assets_dir.exists():
+            app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="static-assets")
+        
+        @app.get("/{full_path:path}")
+        async def serve_frontend(full_path: str):
+            """Serve frontend application
+            
+            Note: This catch-all route is registered after all API routes to ensure
+            API routes take precedence. Any future API routes should be registered
+            before calling setup_static_files() to ensure they are not overridden.
+            """
+            # Prevent path traversal attacks
+            try:
+                file_path = (static_dir / full_path).resolve()
+                # Ensure the resolved path is within static_dir
+                file_path.relative_to(resolved_static_dir)
+            except ValueError:
+                # Path is outside static directory - serve index.html for client-side routing
                 index_path = static_dir / "index.html"
                 if index_path.exists():
                     return FileResponse(index_path)
                 return {"message": "Frontend not built"}
-        except (OSError, ValueError):
-            # Filesystem error
+            
+            # If requesting a file that exists, serve it
+            if file_path.is_file():
+                return FileResponse(file_path)
+            
+            # Otherwise, serve index.html for client-side routing
             index_path = static_dir / "index.html"
             if index_path.exists():
                 return FileResponse(index_path)
+            
             return {"message": "Frontend not built"}
-        
-        # If requesting a file that exists, serve it
-        if file_path.is_file():
-            return FileResponse(file_path)
-        
-        # Otherwise, serve index.html for client-side routing
-        index_path = static_dir / "index.html"
-        if index_path.exists():
-            return FileResponse(index_path)
-        
-        return {"message": "Frontend not built"}
-else:
-    # If static directory doesn't exist, serve API info at root
-    @app.get("/")
-    async def root():
-        """Root endpoint."""
-        return {
-            "name": settings.app_name,
-            "version": settings.app_version,
-            "status": "running",
-            "docs": "/docs",
-        }
+    else:
+        # If no static files exist, add a root endpoint for the API
+        @app.get("/")
+        async def root():
+            """Root endpoint."""
+            return {
+                "name": settings.app_name,
+                "version": settings.app_version,
+                "status": "running",
+                "docs": "/docs",
+            }
+
+
+# Call setup_static_files after all API routes are registered
+setup_static_files()
 
 
 if __name__ == "__main__":

@@ -24,31 +24,21 @@ RUN apt-get update && apt-get install -y \
     postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy package configuration files
+# Copy requirements and install dependencies
 COPY requirements.txt .
-COPY setup.py .
-COPY pyproject.toml .
-COPY README.md .
-
-# Install root requirements
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy source code and config
+# Copy setup files and source code
+COPY pyproject.toml setup.py ./
 COPY src/ ./src/
 COPY config/ ./config/
-COPY main.py .
+COPY main.py ./
 
 # Install the team_alchemy package
 RUN pip install --no-cache-dir -e .
 
-# Copy built frontend from previous stage to static directory
-RUN mkdir -p ./static
+# Copy built frontend from previous stage
 COPY --from=frontend-build /frontend/dist ./static
-
-# Set PYTHONPATH to include src directory
-# Note: This is needed because the 'config' module is at the root level,
-# not inside the team_alchemy package
-ENV PYTHONPATH="${PYTHONPATH}:/app/src:/app"
 
 # Create non-root user
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app

@@ -137,8 +137,6 @@ async def debug_info():
     if settings.environment.lower() == "production":
         raise HTTPException(status_code=404, detail="Not found")
     
-    import os
-    
     static_dir = Path(__file__).parent / "static"
     
     return {

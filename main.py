@@ -100,15 +100,15 @@ def setup_static_files():
             
             Note: This catch-all route is registered after all API routes to ensure
             API routes take precedence. Any future API routes should be registered
-            before this catch-all handler.
+            before calling setup_static_files() to ensure they are not overridden.
             """
             # Prevent path traversal attacks
             try:
                 file_path = (static_dir / full_path).resolve()
                 # Ensure the resolved path is within static_dir
                 file_path.relative_to(resolved_static_dir)
-            except (ValueError, OSError):
-                # Path is outside static directory or filesystem error
+            except ValueError:
+                # Path is outside static directory - serve index.html for client-side routing
                 index_path = static_dir / "index.html"
                 if index_path.exists():
                     return FileResponse(index_path)

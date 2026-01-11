@@ -25,8 +25,13 @@ async def lifespan(app: FastAPI):
     """Application lifespan events."""
     # Startup
     logger.info("Starting Team Alchemy application...")
+    logger.info(f"Environment: {settings.environment}")
+    logger.info(f"Debug mode: {settings.debug}")
+    logger.info(f"API Port: {settings.api_port}")
+    logger.info(f"CORS Origins: {settings.cors_origins}")
+    
     init_db()
-    logger.info("Database initialized")
+    logger.info("Database initialized successfully")
     
     yield
     
@@ -74,11 +79,13 @@ app.include_router(
 
 @app.get("/healthz")
 async def health():
-    """Health check endpoint."""
+    """Health check endpoint for Railway."""
+    logger.debug("Health check endpoint called")
     return {
         "name": settings.app_name,
         "version": settings.app_version,
         "status": "healthy",
+        "environment": settings.environment,
         "docs": "/docs",
     }
 
@@ -86,6 +93,7 @@ async def health():
 @app.get("/health")
 async def health_legacy():
     """Legacy health check endpoint."""
+    logger.debug("Legacy health check endpoint called")
     return {
         "name": settings.app_name,
         "version": settings.app_version,
@@ -98,15 +106,36 @@ async def health_legacy():
 def setup_static_files():
     """Setup static file serving for the frontend."""
     static_dir = Path(__file__).parent / "static"
+    logger.info(f"Checking for static files at: {static_dir}")
+    logger.info(f"Static directory exists: {static_dir.exists()}")
+    
     if static_dir.exists():
-        logger.info(f"Setting up static files from {static_dir}")
+        logger.info(f"Setting up static file serving from {static_dir.resolve()}")
+        
+        # List contents for debugging
+        try:
+            contents = list(static_dir.iterdir())
+            logger.info(f"Static directory contains {len(contents)} items: {[p.name for p in contents]}")
+        except Exception as e:
+            logger.error(f"Error listing static directory contents: {e}")
+        
         # Cache resolved static directory path for security checks
         resolved_static_dir = static_dir.resolve()
         
         # Mount assets directory if it exists
         assets_dir = static_dir / "assets"
         if assets_dir.exists():
+            logger.info(f"Mounting assets directory from {assets_dir}")
             app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="static-assets")
+        else:
+            logger.warning(f"Assets directory not found at {assets_dir}")
+        
+        # Check for index.html
+        index_path = static_dir / "index.html"
+        if index_path.exists():
+            logger.info(f"Found index.html at {index_path}")
+        else:
+            logger.warning(f"index.html not found at {index_path}")
         
         @app.get("/{full_path:path}")
         async def serve_frontend(full_path: str):
@@ -116,49 +145,73 @@ def setup_static_files():
             API routes take precedence. Any future API routes should be registered
             before calling setup_static_files() to ensure they are not overridden.
             """
+            logger.debug(f"Frontend request for: /{full_path}")
+            
             # Prevent path traversal attacks
             try:
                 file_path = (static_dir / full_path).resolve()
                 # Ensure the resolved path is within static_dir
                 file_path.relative_to(resolved_static_dir)
-            except ValueError:
+            except ValueError as e:
                 # Path is outside static directory - serve index.html for client-side routing
+                logger.debug(f"Path outside static dir or not found: {full_path}, serving index.html")
                 index_path = static_dir / "index.html"
                 if index_path.exists():
                     return FileResponse(index_path)
-                return {"message": "Frontend not built"}
+                logger.error("index.html not found, cannot serve frontend")
+                return {"message": "Frontend not built", "error": "index.html not found"}
             
             # If requesting a file that exists, serve it
             if file_path.is_file():
+                logger.debug(f"Serving file: {file_path}")
                 return FileResponse(file_path)
             
             # Otherwise, serve index.html for client-side routing
+            logger.debug(f"File not found: {full_path}, serving index.html for SPA routing")
             index_path = static_dir / "index.html"
             if index_path.exists():
                 return FileResponse(index_path)
             
-            return {"message": "Frontend not built"}
+            logger.error("index.html not found, cannot serve frontend")
+            return {"message": "Frontend not built", "error": "index.html not found"}
+            
+        logger.info("Static file serving configured successfully")
+        
     else:
-        logger.warning(f"Static directory not found at {static_dir}")
-        # If no static files exist, add a root endpoint for the API
+        logger.warning(f"Static directory not found at {static_dir}, setting up fallback root route")
+        
         @app.get("/")
         async def root():
             """Root endpoint when no static files are available."""
+            logger.info("Root endpoint called - no static files available")
             return {
                 "name": settings.app_name,
                 "version": settings.app_version,
                 "status": "running",
+                "environment": settings.environment,
                 "docs": "/docs",
-                "message": "Frontend not built yet"
+                "api_docs": "/redoc",
+                "message": "API is running. Frontend not built yet.",
+                "endpoints": {
+                    "health": "/healthz",
+                    "api": settings.api_prefix,
+                    "docs": "/docs"
+                }
             }
+        
+        logger.info("Fallback root route configured")
 
 
 # Call setup_static_files after all API routes are registered
+logger.info("Configuring static file serving...")
 setup_static_files()
+logger.info("Application setup complete")
 
 
 if __name__ == "__main__":
     import uvicorn
+    
+    logger.info(f"Starting uvicorn server on {settings.api_host}:{settings.api_port}")
     
     uvicorn.run(
         "main:app",

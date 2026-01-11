@@ -17,6 +17,8 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Install system dependencies
+# gcc: Required for building Python packages with C extensions
+# postgresql-client: Required for psycopg2-binary to connect to PostgreSQL databases
 RUN apt-get update && apt-get install -y \
     gcc \
     postgresql-client \

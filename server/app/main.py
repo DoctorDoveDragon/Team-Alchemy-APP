@@ -53,6 +53,9 @@ app.include_router(router, prefix="/api")
 # Serve static files (frontend)
 static_dir = Path(__file__).parent.parent / "static"
 if static_dir.exists():
+    # Cache resolved static directory path for security checks
+    resolved_static_dir = static_dir.resolve()
+    
     # Mount assets directory if it exists
     assets_dir = static_dir / "assets"
     if assets_dir.exists():
@@ -65,7 +68,7 @@ if static_dir.exists():
         try:
             file_path = (static_dir / full_path).resolve()
             # Ensure the resolved path is within static_dir
-            file_path.relative_to(static_dir.resolve())
+            file_path.relative_to(resolved_static_dir)
         except (ValueError, RuntimeError):
             # Path is outside static directory
             index_path = static_dir / "index.html"

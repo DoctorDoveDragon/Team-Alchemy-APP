@@ -251,6 +251,7 @@ def setup_static_files():
                 "name": settings.app_name,
                 "version": settings.app_version,
                 "status": "running",
+                "environment": settings.environment,
                 "docs": "/docs",
                 "api": settings.api_prefix,
                 "warning": "Frontend not built - static directory not found"
@@ -270,6 +271,8 @@ logger.info("Application startup complete!")
 
 if __name__ == "__main__":
     import uvicorn
+    
+    logger.info(f"Starting uvicorn server on {settings.api_host}:{settings.api_port}")
     
     uvicorn.run(
         "main:app",

@@ -29,7 +29,11 @@ def test_healthz_endpoint(client):
     assert data["status"] == "healthy"
     assert "name" in data
     assert "version" in data
-    assert data["docs"] == "/docs"
+    assert "environment" in data
+    assert "timestamp" in data
+    # Verify timestamp is in ISO format
+    from datetime import datetime
+    datetime.fromisoformat(data["timestamp"])
 
 
 def test_health_endpoint(client):

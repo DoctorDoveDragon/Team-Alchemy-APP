@@ -35,9 +35,24 @@ class Settings(BaseSettings):
     celery_result_backend: str = Field(default="redis://localhost:6379/0")
     
     # Security
-    secret_key: str = Field(default="your-secret-key-change-in-production", validation_alias="SECRET_KEY")
+    secret_key: str = Field(default="your-secret-key-change-in-production")
     algorithm: str = Field(default="HS256", validation_alias="ALGORITHM")
     access_token_expire_minutes: int = Field(default=30, validation_alias="ACCESS_TOKEN_EXPIRE_MINUTES")
+    
+    @field_validator('secret_key', mode='before')
+    @classmethod
+    def parse_secret_key(cls, v):
+        """Parse secret key, supporting both SECRET_KEY and JWT_SECRET for backward compatibility."""
+        # Check SECRET_KEY first (new standard)
+        secret = os.getenv("SECRET_KEY")
+        if secret:
+            return secret
+        # Fall back to JWT_SECRET for backward compatibility
+        jwt_secret = os.getenv("JWT_SECRET")
+        if jwt_secret:
+            return jwt_secret
+        # Use provided value or default
+        return v if v is not None else "your-secret-key-change-in-production"
     
     # Logging
     log_level: str = Field(default="INFO", validation_alias="LOG_LEVEL")
@@ -114,16 +129,12 @@ class Settings(BaseSettings):
     @classmethod
     def parse_celery_broker(cls, v):
         """Parse Celery broker URL, using REDIS_URL if available."""
-        if v is not None and v != cls.DEFAULT_REDIS_URL:
-            return v
         return cls._get_redis_based_url("CELERY_BROKER_URL", cls.DEFAULT_REDIS_URL)
     
     @field_validator('celery_result_backend', mode='before')
     @classmethod
     def parse_celery_result(cls, v):
         """Parse Celery result backend, using REDIS_URL if available."""
-        if v is not None and v != cls.DEFAULT_REDIS_URL:
-            return v
         return cls._get_redis_based_url("CELERY_RESULT_BACKEND", cls.DEFAULT_REDIS_URL)
 
 

@@ -97,3 +97,23 @@ def test_settings_invalid_port_fallback(monkeypatch):
     
     # Should fall back to default port of 8000
     assert settings.api_port == 8000
+
+
+def test_settings_jwt_secret_backward_compatibility(monkeypatch):
+    """Test that JWT_SECRET is supported for backward compatibility."""
+    monkeypatch.setenv("JWT_SECRET", "jwt-test-secret")
+    
+    settings = Settings()
+    
+    assert settings.secret_key == "jwt-test-secret"
+
+
+def test_settings_secret_key_priority(monkeypatch):
+    """Test that SECRET_KEY takes priority over JWT_SECRET."""
+    monkeypatch.setenv("SECRET_KEY", "new-secret")
+    monkeypatch.setenv("JWT_SECRET", "old-jwt-secret")
+    
+    settings = Settings()
+    
+    # SECRET_KEY should take priority
+    assert settings.secret_key == "new-secret"

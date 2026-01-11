@@ -71,7 +71,7 @@ If using Celery for background tasks:
 
 ```bash
 # Application
-APP_NAME=Team Alchemy APP
+APP_NAME=Team Alchemy
 APP_VERSION=0.1.0
 DEBUG=False
 

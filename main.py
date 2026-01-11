@@ -72,17 +72,6 @@ app.include_router(
 )
 
 
-@app.get("/")
-async def root():
-    """Root endpoint."""
-    return {
-        "name": settings.app_name,
-        "version": settings.app_version,
-        "status": "running",
-        "docs": "/docs",
-    }
-
-
 @app.get("/health")
 async def health():
     """Health check endpoint."""
@@ -135,6 +124,17 @@ def setup_static_files():
                 return FileResponse(index_path)
             
             return {"message": "Frontend not built"}
+    else:
+        # If no static files exist, add a root endpoint for the API
+        @app.get("/")
+        async def root():
+            """Root endpoint."""
+            return {
+                "name": settings.app_name,
+                "version": settings.app_version,
+                "status": "running",
+                "docs": "/docs",
+            }
 
 
 # Call setup_static_files after all API routes are registered

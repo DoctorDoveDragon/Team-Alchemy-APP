@@ -52,7 +52,7 @@ app.add_middleware(
 )
 
 # Add custom middleware
-app.add_middleware(ValidationMiddleware)
+app.add_middleware(ValidationMiddleware, max_request_size=10 * 1024 * 1024)
 
 # Include routers
 app.include_router(

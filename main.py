@@ -115,10 +115,15 @@ if static_dir.exists():
         # Prevent path traversal attacks
         try:
             file_path = (static_dir / full_path).resolve()
-            # Ensure the resolved path is within static_dir
-            file_path.relative_to(resolved_static_dir)
-        except (ValueError, OSError):
-            # Path is outside static directory or filesystem error
+            # Ensure the resolved path is within static_dir (Python 3.9+)
+            if not file_path.is_relative_to(resolved_static_dir):
+                # Path is outside static directory
+                index_path = static_dir / "index.html"
+                if index_path.exists():
+                    return FileResponse(index_path)
+                return {"message": "Frontend not built"}
+        except (OSError, ValueError):
+            # Filesystem error
             index_path = static_dir / "index.html"
             if index_path.exists():
                 return FileResponse(index_path)

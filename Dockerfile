@@ -46,6 +46,8 @@ RUN mkdir -p ./static
 COPY --from=frontend-build /frontend/dist ./static
 
 # Set PYTHONPATH to include src directory
+# Note: This is needed because the 'config' module is at the root level,
+# not inside the team_alchemy package
 ENV PYTHONPATH="${PYTHONPATH}:/app/src:/app"
 
 # Create non-root user

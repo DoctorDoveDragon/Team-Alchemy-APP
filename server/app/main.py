@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
 import os
+from pathlib import Path
 
 from app.database import init_db
 from app.routes import router
@@ -25,7 +28,7 @@ app = FastAPI(
 )
 
 # CORS configuration
-origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:8000").split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -46,6 +49,26 @@ async def health_check():
 
 # Include API routes
 app.include_router(router, prefix="/api")
+
+# Serve static files (frontend)
+static_dir = Path(__file__).parent.parent / "static"
+if static_dir.exists():
+    app.mount("/assets", StaticFiles(directory=str(static_dir / "assets")), name="static-assets")
+    
+    @app.get("/{full_path:path}")
+    async def serve_frontend(full_path: str):
+        """Serve frontend application"""
+        # If requesting a file that exists, serve it
+        file_path = static_dir / full_path
+        if file_path.is_file():
+            return FileResponse(file_path)
+        
+        # Otherwise, serve index.html for client-side routing
+        index_path = static_dir / "index.html"
+        if index_path.exists():
+            return FileResponse(index_path)
+        
+        return {"message": "Frontend not built"}
 
 
 if __name__ == "__main__":

@@ -1,3 +1,17 @@
+# Stage 1: Build frontend
+FROM node:18-alpine AS frontend-build
+
+WORKDIR /frontend
+
+# Copy frontend package files
+COPY frontend/package*.json ./
+RUN npm ci
+
+# Copy frontend source and build
+COPY frontend/ ./
+RUN npm run build
+
+# Stage 2: Backend + serve frontend
 FROM python:3.11-slim
 
 WORKDIR /app
@@ -5,24 +19,25 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
+    postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install Python dependencies
-COPY requirements.txt .
+# Copy server requirements and install
+COPY server/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY . .
+# Copy server application code
+COPY server/ ./server/
 
-# Install package
-RUN pip install -e .
+# Copy built frontend from previous stage
+COPY --from=frontend-build /frontend/dist ./server/static
 
 # Create non-root user
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 
-# Expose port
+# Expose port (Railway will override with $PORT)
 EXPOSE 8000
 
-# Run application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Use shell form to properly expand $PORT environment variable
+CMD sh -c "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --app-dir server"

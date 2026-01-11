@@ -2,6 +2,8 @@
 Main FastAPI application entry point.
 """
 
+import os
+import re
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -32,7 +34,9 @@ logger.info(f"API Host: {settings.api_host}")
 logger.info(f"API Port: {settings.api_port}")
 logger.info(f"API Prefix: {settings.api_prefix}")
 logger.info(f"CORS Origins: {settings.cors_origins}")
-logger.info(f"Database URL: {settings.database_url.split('@')[-1] if '@' in settings.database_url else 'SQLite'}")
+# Sanitize database URL to hide credentials
+db_url_sanitized = re.sub(r'://[^:]*:[^@]*@', '://***:***@', settings.database_url) if '@' in settings.database_url else settings.database_url
+logger.info(f"Database URL: {db_url_sanitized}")
 logger.info(f"Log Level: {settings.log_level}")
 logger.info("="*60)
 
@@ -130,11 +134,10 @@ async def health_legacy():
 @app.get("/api/v1/debug/info")
 async def debug_info():
     """Debug endpoint to check application configuration (disable in production)."""
-    if settings.environment == "production":
+    if settings.environment.lower() == "production":
         raise HTTPException(status_code=404, detail="Not found")
     
     import os
-    from pathlib import Path
     
     static_dir = Path(__file__).parent / "static"
     
@@ -218,7 +221,7 @@ def setup_static_files():
                 if index_path.exists():
                     return FileResponse(index_path)
                 logger.error(f"index.html not found at {index_path}")
-                return {"error": "Frontend not built", "message": "index.html not found"}
+                return {"message": "Frontend not built"}
             
             # If requesting a file that exists, serve it
             if file_path.is_file():
@@ -232,7 +235,7 @@ def setup_static_files():
                 return FileResponse(index_path)
             
             logger.error(f"Cannot serve {full_path}, index.html not found")
-            return {"error": "Frontend not built", "message": "index.html not found"}
+            return {"message": "Frontend not built"}
         
         logger.info("✓ Static file serving configured successfully")
         logger.info("="*60)

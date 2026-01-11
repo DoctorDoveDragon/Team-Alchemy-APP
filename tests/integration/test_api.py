@@ -3,6 +3,7 @@ Integration tests for API endpoints.
 """
 
 import pytest
+from datetime import datetime
 from fastapi.testclient import TestClient
 
 # Note: These are placeholder tests that will need a proper test setup
@@ -32,8 +33,8 @@ def test_healthz_endpoint(client):
     assert "environment" in data
     assert "timestamp" in data
     # Verify timestamp is in ISO format
-    from datetime import datetime
-    datetime.fromisoformat(data["timestamp"])
+    timestamp = datetime.fromisoformat(data["timestamp"])
+    assert timestamp is not None
 
 
 def test_health_endpoint(client):

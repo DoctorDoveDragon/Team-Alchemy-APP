@@ -76,8 +76,10 @@ app.include_router(
 async def health():
     """Health check endpoint."""
     return {
-        "status": "healthy",
+        "name": settings.app_name,
         "version": settings.app_version,
+        "status": "running",
+        "docs": "/docs",
     }
 
 

@@ -5,7 +5,7 @@ Request validation middleware.
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
-from typing import Any, Dict
+from typing import Any, Dict, List
 from fastapi import HTTPException
 
 
@@ -30,7 +30,7 @@ class ValidationMiddleware(BaseHTTPMiddleware):
         return response
 
 
-def validate_request_data(data: Dict[str, Any], required_fields: list[str]) -> bool:
+def validate_request_data(data: Dict[str, Any], required_fields: List[str]) -> bool:
     """
     Validate that required fields are present in request data.
     

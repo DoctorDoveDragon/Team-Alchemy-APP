@@ -51,9 +51,15 @@ def test_validation_middleware_request_too_large():
     
     client = TestClient(app)
     
-    # Create a request with content-length header exceeding the limit
+    # Create a request that will trigger the validation
+    # The middleware checks the Content-Length header before processing the body
+    import json
     large_data = {"data": "x" * 1000}
-    response = client.post("/", json=large_data, headers={"content-length": "200"})
+    json_data = json.dumps(large_data)
+    actual_length = len(json_data)
+    
+    # Send request with actual content length that exceeds the limit
+    response = client.post("/", json=large_data, headers={"content-length": str(actual_length)})
     
     assert response.status_code == 413
     assert response.json() == {"detail": "Request too large"}

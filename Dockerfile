@@ -41,5 +41,6 @@ USER appuser
 # Expose port (Railway will override with $PORT)
 EXPOSE 8000
 
-# Use shell form to properly expand $PORT environment variable
+# Use shell form to properly expand $PORT environment variable at runtime
+# Railway sets PORT dynamically, so we need shell expansion
 CMD sh -c "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --app-dir server"

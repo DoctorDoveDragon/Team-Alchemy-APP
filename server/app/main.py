@@ -63,14 +63,19 @@ if static_dir.exists():
     
     @app.get("/{full_path:path}")
     async def serve_frontend(full_path: str):
-        """Serve frontend application"""
+        """Serve frontend application
+        
+        Note: This catch-all route is registered after all API routes (/api/*, /healthz)
+        to ensure API routes take precedence. Any future API routes should be registered
+        before this catch-all handler.
+        """
         # Prevent path traversal attacks
         try:
             file_path = (static_dir / full_path).resolve()
             # Ensure the resolved path is within static_dir
             file_path.relative_to(resolved_static_dir)
-        except (ValueError, RuntimeError):
-            # Path is outside static directory
+        except (ValueError, OSError) as e:
+            # Path is outside static directory or filesystem error
             index_path = static_dir / "index.html"
             if index_path.exists():
                 return FileResponse(index_path)

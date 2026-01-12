@@ -272,12 +272,13 @@ logger.info("Application startup complete!")
 if __name__ == "__main__":
     import uvicorn
     
-    logger.info(f"Starting uvicorn server on {settings.api_host}:{settings.api_port}")
+    run_port = int(os.environ.get("PORT", settings.api_port))
+    logger.info(f"Starting uvicorn server on {settings.api_host}:{run_port}")
     
     uvicorn.run(
         "main:app",
         host=settings.api_host,
-        port=settings.api_port,
+        port=run_port,
         reload=settings.debug,
         log_level=settings.log_level.lower(),
     )

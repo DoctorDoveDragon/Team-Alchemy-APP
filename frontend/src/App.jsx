@@ -11,9 +11,20 @@ function App() {
   useEffect(() => {
     // Check backend health
     fetch('/healthz')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`Health check failed: ${res.status}`);
+        }
+        return res.json();
+      })
       .then(data => setHealthStatus(data))
-      .catch(err => console.error('Health check failed:', err))
+      .catch(err => {
+        console.error('Health check failed:', err);
+        setHealthStatus({
+          status: 'unhealthy',
+          error: err.message
+        });
+      });
   }, [])
 
   const handleVerification = async () => {
@@ -33,9 +44,18 @@ function App() {
             Academic Collaboration & Research Platform
           </p>
           {healthStatus && (
-            <div className="mt-4 inline-flex items-center px-4 py-2 bg-green-100 dark:bg-green-900 rounded-full">
-              <span className="text-green-800 dark:text-green-200">
-                ✓ Backend: {healthStatus.status}
+            <div className={`mt-4 inline-flex items-center px-4 py-2 rounded-full ${
+              healthStatus.status === 'unhealthy' 
+                ? 'bg-red-100 dark:bg-red-900' 
+                : 'bg-green-100 dark:bg-green-900'
+            }`}>
+              <span className={
+                healthStatus.status === 'unhealthy'
+                  ? 'text-red-800 dark:text-red-200'
+                  : 'text-green-800 dark:text-green-200'
+              }>
+                {healthStatus.status === 'unhealthy' ? '✗' : '✓'} Backend: {healthStatus.status}
+                {healthStatus.error && ` (${healthStatus.error})`}
               </span>
             </div>
           )}

@@ -30,7 +30,9 @@ def main():
     settings = get_settings()
     
     print(f"Environment: {settings.environment}")
-    print(f"Database URL: {settings.database_url[:30]}...")
+    # Sanitize database URL to avoid exposing credentials
+    db_type = settings.database_url.split('://')[0] if '://' in settings.database_url else 'unknown'
+    print(f"Database Type: {db_type}")
     print()
     
     # Step 1: Run Alembic migrations

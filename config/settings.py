@@ -165,7 +165,7 @@ class Settings(BaseSettings):
             if not any(self.database_url.startswith(prefix) for prefix in 
                       ['postgresql://', 'postgres://', 'sqlite://', 'mysql://']):
                 issues.append(
-                    f"DATABASE_URL appears to have an invalid format: {self.database_url[:20]}... "
+                    "DATABASE_URL appears to have an invalid format. "
                     "Expected format: postgresql://user:pass@host:port/dbname"
                 )
         else:

@@ -4,6 +4,7 @@ Unit tests for Redis and Celery configuration with mocked dependencies.
 
 import pytest
 from unittest.mock import Mock, patch, MagicMock
+import redis
 
 
 @pytest.fixture
@@ -34,7 +35,6 @@ def test_redis_connection_with_valid_url(monkeypatch, mock_redis):
     with patch('redis.from_url') as mock_from_url:
         mock_from_url.return_value = mock_redis
         
-        import redis
         client = redis.from_url("redis://localhost:6379/0")
         
         # Verify connection
@@ -48,8 +48,6 @@ def test_redis_connection_failure(monkeypatch):
     
     with patch('redis.from_url') as mock_from_url:
         mock_from_url.side_effect = ConnectionError("Redis connection failed")
-        
-        import redis
         
         with pytest.raises(ConnectionError):
             redis.from_url("redis://invalid:6379/0")
@@ -153,7 +151,6 @@ def test_redis_health_check(mock_redis_class):
     mock_instance.ping.return_value = True
     mock_redis_class.return_value = mock_instance
     
-    import redis
     client = redis.Redis()
     
     # Health check

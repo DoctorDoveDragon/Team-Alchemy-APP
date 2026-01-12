@@ -38,8 +38,8 @@ docker-compose logs -f
 
 Services will be available at:
 - Frontend: http://localhost:3000
-- Backend API: http://localhost:5000
-- API Documentation: http://localhost:5000/docs
+- Backend API: http://localhost:8000
+- API Documentation: http://localhost:8000/docs
 - PostgreSQL: localhost:5432
 - Redis: localhost:6379
 
@@ -48,16 +48,15 @@ Services will be available at:
 #### Backend
 
 ```bash
-cd server
 pip install -r requirements.txt
-pip install -r requirements-dev.txt
+pip install -e .
 
 # Set environment variables
-export DATABASE_URL="postgresql://teamalchemy:teamalchemy@localhost:5432/teamalchemy"
-export JWT_SECRET="your-secret-key-here"
+export DATABASE_URL="postgresql://user:pass@localhost:5432/teamalchemy"
+export SECRET_KEY="your-secret-key-here"
 
 # Run the server
-uvicorn app.main:app --reload --port 5000
+uvicorn main:app --reload --port 8000
 ```
 
 #### Frontend
@@ -80,17 +79,18 @@ The frontend will be available at http://localhost:3000
 │   │   ├── data/         # Sample data
 │   │   └── main.jsx      # Entry point
 │   └── package.json
-├── server/               # FastAPI backend
-│   ├── app/
-│   │   ├── main.py       # FastAPI app
-│   │   ├── models.py     # SQLModel models
-│   │   ├── routes.py     # API routes
-│   │   └── auth.py       # Authentication
-│   └── tests/
+├── src/                  # Team Alchemy Python package
+│   └── team_alchemy/
+│       ├── api/          # API routes
+│       ├── data/         # Data models and repository
+│       └── ml/           # Machine learning modules
+├── main.py               # FastAPI application entry point
+├── config/               # Configuration files
 ├── .github/
 │   └── workflows/
 │       └── ci.yml        # CI workflow
 ├── docker-compose.yml    # Docker services
+├── Dockerfile            # Production Docker image
 ├── nginx.conf            # Nginx configuration
 └── .env.example          # Environment variables template
 ```
@@ -100,7 +100,6 @@ The frontend will be available at http://localhost:3000
 ### Backend Tests
 
 ```bash
-cd server
 pytest tests/
 ```
 
@@ -123,12 +122,12 @@ The CI workflow runs on push and pull requests. It:
 
 Copy `.env.example` to `.env` and configure:
 
-- `JWT_SECRET`: Secret key for JWT tokens (REQUIRED - must be set by repository owners)
+- `SECRET_KEY`: Secret key for JWT tokens and encryption (REQUIRED - must be set by repository owners)
 - `DATABASE_URL`: PostgreSQL connection string
 - `REDIS_URL`: Redis connection string
 - `ENVIRONMENT`: development/production
 
-**Note**: Secrets are not set in this repository. Repository owners must add JWT_SECRET and other sensitive values.
+**Note**: Secrets are not set in this repository. Repository owners must add SECRET_KEY and other sensitive values.
 
 ## API Endpoints
 
@@ -137,7 +136,7 @@ Copy `.env.example` to `.env` and configure:
 - `POST /api/auth/login` - User login
 - `POST /api/documents` - Create document
 
-Full API documentation available at http://localhost:5000/docs
+Full API documentation available at http://localhost:8000/docs
 
 ## Contributing
 

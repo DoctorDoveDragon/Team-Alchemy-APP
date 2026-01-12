@@ -136,6 +136,58 @@ class Settings(BaseSettings):
     def parse_celery_result(cls, v):
         """Parse Celery result backend, using REDIS_URL if available."""
         return cls._get_redis_based_url("CELERY_RESULT_BACKEND", cls.DEFAULT_REDIS_URL)
+    
+    def validate_critical_env_vars(self) -> None:
+        """
+        Validate critical environment variables for production deployments.
+        
+        Raises:
+            ValueError: If critical environment variables are missing or invalid in production.
+        """
+        issues = []
+        
+        # Check SECRET_KEY in production
+        if self.environment.lower() == "production":
+            if self.secret_key == "your-secret-key-change-in-production":
+                issues.append(
+                    "SECRET_KEY is set to default value. "
+                    "Please set a secure random key in production environment."
+                )
+            elif len(self.secret_key) < 32:
+                issues.append(
+                    f"SECRET_KEY is too short ({len(self.secret_key)} characters). "
+                    "Recommended minimum is 32 characters for security."
+                )
+        
+        # Check DATABASE_URL
+        if self.database_url:
+            # Validate it's a proper database URL format
+            if not any(self.database_url.startswith(prefix) for prefix in 
+                      ['postgresql://', 'postgres://', 'sqlite://', 'mysql://']):
+                issues.append(
+                    f"DATABASE_URL appears to have an invalid format: {self.database_url[:20]}... "
+                    "Expected format: postgresql://user:pass@host:port/dbname"
+                )
+        else:
+            issues.append("DATABASE_URL is empty or not set.")
+        
+        # Check PORT is valid
+        if not isinstance(self.api_port, int) or self.api_port < 1 or self.api_port > 65535:
+            issues.append(
+                f"API port is invalid: {self.api_port}. Must be between 1 and 65535."
+            )
+        
+        if issues:
+            error_msg = "Environment variable validation failed:\n" + "\n".join(f"  - {issue}" for issue in issues)
+            if self.environment.lower() == "production":
+                raise ValueError(error_msg)
+            else:
+                # In development, just log warnings
+                import logging
+                logger = logging.getLogger("team_alchemy")
+                logger.warning("Environment validation warnings:")
+                for issue in issues:
+                    logger.warning(f"  - {issue}")
 
 
 # Global settings instance

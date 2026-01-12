@@ -22,6 +22,14 @@ from config.logging_config import setup_logging
 settings = get_settings()
 logger = setup_logging(settings.log_level, settings.log_format)
 
+# Validate critical environment variables
+try:
+    settings.validate_critical_env_vars()
+    logger.info("✓ Environment variables validated successfully")
+except ValueError as e:
+    logger.error(f"✗ Environment validation failed: {e}")
+    raise
+
 # Log application startup information
 logger.info("="*60)
 logger.info("STARTING TEAM ALCHEMY APPLICATION")

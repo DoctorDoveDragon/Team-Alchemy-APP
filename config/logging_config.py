@@ -5,6 +5,7 @@ Logging configuration for Team Alchemy.
 import logging
 import logging.config
 import sys
+import os
 from typing import Dict, Any
 
 
@@ -20,6 +21,13 @@ def get_logging_config(log_level: str = "INFO", log_format: str = "json") -> Dic
         Logging configuration dictionary
     """
     
+    # Determine if we're in production based on environment
+    environment = os.getenv("ENVIRONMENT", "development").lower()
+    is_production = environment == "production"
+    
+    # In production, reduce verbosity for third-party loggers
+    third_party_level = "WARNING" if is_production else log_level
+    
     if log_format == "json":
         formatter_config = {
             "format": '{"time": "%(asctime)s", "level": "%(levelname)s", "name": "%(name)s", "message": "%(message)s"}',
@@ -31,7 +39,7 @@ def get_logging_config(log_level: str = "INFO", log_format: str = "json") -> Dic
             "datefmt": "%Y-%m-%d %H:%M:%S"
         }
     
-    return {
+    config = {
         "version": 1,
         "disable_existing_loggers": False,
         "formatters": {
@@ -44,19 +52,37 @@ def get_logging_config(log_level: str = "INFO", log_format: str = "json") -> Dic
                 "formatter": "default",
                 "stream": sys.stdout,
             },
-            "file": {
-                "class": "logging.handlers.RotatingFileHandler",
-                "level": log_level,
-                "formatter": "default",
-                "filename": "team_alchemy.log",
-                "maxBytes": 10485760,  # 10MB
-                "backupCount": 5,
-            },
         },
         "loggers": {
             "team_alchemy": {
                 "level": log_level,
-                "handlers": ["console", "file"],
+                "handlers": ["console"],
+                "propagate": False,
+            },
+            # Reduce verbosity for third-party libraries in production
+            "uvicorn": {
+                "level": third_party_level,
+                "handlers": ["console"],
+                "propagate": False,
+            },
+            "uvicorn.access": {
+                "level": "WARNING" if is_production else "INFO",
+                "handlers": ["console"],
+                "propagate": False,
+            },
+            "uvicorn.error": {
+                "level": log_level,
+                "handlers": ["console"],
+                "propagate": False,
+            },
+            "fastapi": {
+                "level": third_party_level,
+                "handlers": ["console"],
+                "propagate": False,
+            },
+            "sqlalchemy.engine": {
+                "level": "WARNING" if is_production else log_level,
+                "handlers": ["console"],
                 "propagate": False,
             },
         },
@@ -65,6 +91,20 @@ def get_logging_config(log_level: str = "INFO", log_format: str = "json") -> Dic
             "handlers": ["console"],
         },
     }
+    
+    # Only add file handler in non-production environments to avoid disk usage issues
+    if not is_production:
+        config["handlers"]["file"] = {
+            "class": "logging.handlers.RotatingFileHandler",
+            "level": log_level,
+            "formatter": "default",
+            "filename": "team_alchemy.log",
+            "maxBytes": 10485760,  # 10MB
+            "backupCount": 5,
+        }
+        config["loggers"]["team_alchemy"]["handlers"].append("file")
+    
+    return config
 
 
 def setup_logging(log_level: str = "INFO", log_format: str = "json"):

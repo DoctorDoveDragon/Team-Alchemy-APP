@@ -100,8 +100,70 @@ The frontend will be available at http://localhost:3000
 ### Backend Tests
 
 ```bash
-pytest tests/
+# Run all tests
+pytest tests/ -v
+
+# Run specific test suites
+pytest tests/unit/ -v          # Unit tests only
+pytest tests/integration/ -v   # Integration tests only
+pytest tests/config/ -v        # Configuration tests
+
+# Run with coverage
+pytest tests/ -v --cov=src/team_alchemy --cov-report=html
+
+# Run specific test file
+pytest tests/config/test_settings.py -v
 ```
+
+### Debugging
+
+#### Check Application Health
+
+```bash
+# Local development
+curl http://localhost:8000/healthz
+
+# Production/Railway
+curl https://your-app.railway.app/healthz
+```
+
+#### View Application Logs
+
+```bash
+# Local (Docker Compose)
+docker-compose logs -f backend
+
+# Railway CLI
+railway logs
+
+# Check specific service logs
+docker-compose logs -f postgres
+docker-compose logs -f redis
+```
+
+#### Common Issues and Solutions
+
+**Database Connection Issues:**
+```bash
+# Verify DATABASE_URL is set correctly
+echo $DATABASE_URL
+
+# Test database connectivity
+psql $DATABASE_URL -c "SELECT 1;"
+
+# Initialize database if needed
+python -c "from team_alchemy.data.repository import init_db; init_db()"
+```
+
+**Port Binding Issues:**
+- Ensure PORT environment variable is set correctly
+- Check if port is already in use: `lsof -i :8000`
+- Railway automatically sets PORT - don't override it
+
+**SECRET_KEY Warnings:**
+- In production, always set a secure SECRET_KEY (minimum 32 characters)
+- Generate secure key: `python -c "import secrets; print(secrets.token_urlsafe(32))"`
+- Never commit .env files with production secrets
 
 ### Frontend Tests
 
@@ -117,6 +179,59 @@ The CI workflow runs on push and pull requests. It:
 2. Runs backend tests with pytest
 3. Installs frontend dependencies
 4. Builds frontend application
+
+### Database Migrations
+
+This project uses Alembic for database schema migrations.
+
+#### Create a New Migration
+
+```bash
+# Auto-generate migration from model changes
+alembic revision --autogenerate -m "Add new table or column"
+
+# Or create an empty migration template
+alembic revision -m "Description of changes"
+```
+
+#### Apply Migrations
+
+```bash
+# Upgrade to latest version
+alembic upgrade head
+
+# Upgrade to specific revision
+alembic upgrade <revision_id>
+
+# Downgrade one revision
+alembic downgrade -1
+```
+
+#### View Migration History
+
+```bash
+# Show current version
+alembic current
+
+# Show migration history
+alembic history
+
+# Show pending migrations
+alembic heads
+```
+
+#### Automated Deployment Migration
+
+For production deployments (e.g., Railway), use the migration script:
+
+```bash
+python scripts/migrate_database.py
+```
+
+This script:
+1. Runs all pending Alembic migrations
+2. Initializes the database if needed
+3. Provides clear status messages
 
 ## Environment Variables
 

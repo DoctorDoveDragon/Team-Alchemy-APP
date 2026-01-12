@@ -134,13 +134,49 @@ After deploying, you need to initialize the database:
 
 For schema updates, consider using Alembic:
 
+#### Manual Migration
 ```bash
-# Generate migration
+# Generate migration from model changes
 alembic revision --autogenerate -m "description"
 
-# Apply migration
-alembic upgrade head
+# Apply migration via Railway CLI
+railway run alembic upgrade head
 ```
+
+#### Automated Migration (Recommended)
+
+Add a migration step to your deployment process:
+
+**Option 1: Add to railway.json**
+```json
+{
+  "build": {
+    "builder": "DOCKERFILE"
+  },
+  "deploy": {
+    "healthcheckPath": "/healthz",
+    "healthcheckTimeout": 300,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 10,
+    "startCommand": "python scripts/migrate_database.py && uvicorn main:app --host 0.0.0.0 --port $PORT"
+  }
+}
+```
+
+**Option 2: Run migration script manually**
+```bash
+# Via Railway CLI
+railway run python scripts/migrate_database.py
+
+# Then restart the service
+railway restart
+```
+
+The `migrate_database.py` script:
+- Runs all pending Alembic migrations
+- Initializes database if needed
+- Provides clear status messages
+- Safe to run multiple times (idempotent)
 
 ## Health Checks
 
@@ -261,31 +297,408 @@ Update `railway.json` to include frontend build:
 
 If you see database connection errors:
 
-1. Verify `DATABASE_URL` is set correctly
-2. Check PostgreSQL service is running
-3. Ensure `psycopg2-binary` is in `requirements.txt`
+**Symptoms:**
+```
+sqlalchemy.exc.OperationalError: could not connect to server
+```
+
+**Solutions:**
+
+1. **Verify DATABASE_URL is set correctly**
+   ```bash
+   # In Railway dashboard, check Variables tab
+   # Ensure DATABASE_URL is present and properly formatted
+   ```
+
+2. **Check PostgreSQL service is running**
+   - In Railway dashboard, verify PostgreSQL service status
+   - Check service logs for errors
+
+3. **Ensure psycopg2-binary is installed**
+   ```bash
+   # Verify in requirements.txt
+   grep psycopg2-binary requirements.txt
+   ```
+
+4. **Test database connection manually**
+   ```bash
+   railway run python -c "from team_alchemy.data.repository import init_db; init_db()"
+   ```
+
+5. **Check database initialization**
+   ```bash
+   # View deployment logs to see if database init succeeded
+   # Look for "✓ Database initialized successfully"
+   ```
 
 ### Port Binding Issues
 
+**Symptoms:**
+```
+Error: Address already in use
+uvicorn.error: Can't bind to port
+```
+
+**Solutions:**
+
 Railway automatically sets the `PORT` variable. Ensure:
-- `config/settings.py` reads from `PORT` environment variable
-- `main.py` uses `settings.api_port`
+
+1. **Don't manually set PORT in Railway variables**
+   - Railway provides this automatically
+   - Your app should read from `os.getenv("PORT")`
+
+2. **Verify settings.py reads PORT correctly**
+   ```python
+   # The parse_port validator in settings.py handles this
+   # PORT takes priority over API_PORT
+   ```
+
+3. **Check application startup logs**
+   ```
+   Look for: "API Port: <port_number>"
+   ```
+
+4. **Verify railway.json configuration**
+   ```json
+   {
+     "deploy": {
+       "healthcheckPath": "/healthz"
+     }
+   }
+   ```
 
 ### CORS Errors
 
-Update `CORS_ORIGINS` to include your frontend domain:
-```bash
-CORS_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
+**Symptoms:**
 ```
+Access to fetch at 'https://api.example.com' from origin 'https://example.com' 
+has been blocked by CORS policy
+```
+
+**Solutions:**
+
+1. **Update CORS_ORIGINS environment variable**
+   ```bash
+   CORS_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
+   ```
+
+2. **Don't use wildcards in production**
+   ```bash
+   # Bad (insecure):
+   CORS_ORIGINS=*
+   
+   # Good (secure):
+   CORS_ORIGINS=https://myapp.com,https://www.myapp.com
+   ```
+
+3. **Include all necessary origins**
+   - Main domain
+   - www subdomain
+   - Any other subdomains that need access
+
+### Environment Variable Validation Errors
+
+**Symptoms:**
+```
+ValueError: Environment variable validation failed:
+  - SECRET_KEY is set to default value
+```
+
+**Solutions:**
+
+1. **Set a secure SECRET_KEY**
+   ```bash
+   # Generate a secure key
+   python -c "import secrets; print(secrets.token_urlsafe(32))"
+   
+   # Set in Railway dashboard Variables tab
+   SECRET_KEY=<generated_key>
+   ```
+
+2. **Ensure minimum key length (32 characters)**
+   ```bash
+   # The key must be at least 32 characters long for production
+   ```
+
+3. **Check environment variable in Railway**
+   - Go to Variables tab in Railway dashboard
+   - Verify SECRET_KEY is set
+   - Restart deployment after adding the variable
+
+### Static Files Not Serving
+
+**Symptoms:**
+```
+404 Not Found for static assets
+Frontend not loading
+```
+
+**Solutions:**
+
+1. **Build frontend before deployment**
+   ```bash
+   # Add to railway.json or Dockerfile
+   cd frontend && npm install && npm run build
+   ```
+
+2. **Verify static directory exists**
+   ```bash
+   # Check if static/index.html exists after build
+   ls -la static/
+   ```
+
+3. **Check application logs**
+   ```
+   Look for: "✓ Static file serving configured successfully"
+   Or: "STATIC DIRECTORY NOT FOUND"
+   ```
+
+4. **Verify build configuration**
+   ```bash
+   # Check that frontend build outputs to /static directory
+   # Update frontend/vite.config.js if needed
+   ```
 
 ### Migration Issues
 
-If database tables aren't created:
-
-```bash
-# Use Railway CLI to run init
-railway run python -c "from team_alchemy.data.repository import init_db; init_db()"
+**Symptoms:**
 ```
+Table doesn't exist
+Column not found
+alembic.util.exc.CommandError
+```
+
+**Solutions:**
+
+1. **Run automated migration script**
+   ```bash
+   railway run python scripts/migrate_database.py
+   ```
+
+2. **Check migration status**
+   ```bash
+   # Via Railway CLI
+   railway run alembic current
+   
+   # View migration history
+   railway run alembic history
+   ```
+
+3. **Apply migrations manually**
+   ```bash
+   # Upgrade to latest version
+   railway run alembic upgrade head
+   
+   # Downgrade if needed
+   railway run alembic downgrade -1
+   ```
+
+4. **If migrations fail, try database initialization**
+   ```bash
+   railway run python -c "from team_alchemy.data.repository import init_db; init_db()"
+   ```
+
+5. **Check if tables were created**
+   ```bash
+   # Connect to Railway PostgreSQL
+   railway connect postgres
+   
+   # List tables
+   \dt
+   
+   # Describe a table
+   \d table_name
+   ```
+
+6. **Generate initial migration (first time only)**
+   ```bash
+   # If no migrations exist
+   alembic revision --autogenerate -m "Initial migration"
+   
+   # Apply it
+   railway run alembic upgrade head
+   ```
+
+7. **Reset database (CAUTION: destroys all data)**
+   ```bash
+   # Only in development/staging!
+   railway run alembic downgrade base
+   railway run alembic upgrade head
+   ```
+
+### Application Crashes on Startup
+
+**Symptoms:**
+```
+Application exits immediately after start
+Health check failing
+```
+
+**Solutions:**
+
+1. **Check deployment logs**
+   - Railway Dashboard → Service → Deployments → Select deployment → View logs
+   - Look for error messages and stack traces
+
+2. **Common startup errors:**
+   - Missing environment variables (SECRET_KEY, DATABASE_URL)
+   - Database connection failures
+   - Invalid configuration values
+   - Import errors or missing dependencies
+
+3. **Verify all required environment variables**
+   ```bash
+   # Critical variables for production:
+   SECRET_KEY=<secure-key>
+   DATABASE_URL=<provided-by-railway>
+   ENVIRONMENT=production
+   ```
+
+4. **Test locally with production-like settings**
+   ```bash
+   # Set environment to production
+   export ENVIRONMENT=production
+   export SECRET_KEY=<32-char-key>
+   export DATABASE_URL=<your-db-url>
+   
+   # Run application
+   uvicorn main:app --host 0.0.0.0 --port 8000
+   ```
+
+5. **Check dependencies are installed**
+   ```bash
+   # Verify requirements.txt includes all dependencies
+   # Railway installs from this file during build
+   ```
+
+### Health Check Failures
+
+**Symptoms:**
+```
+Railway shows service as unhealthy
+Deployment keeps restarting
+```
+
+**Solutions:**
+
+1. **Verify health endpoint responds**
+   ```bash
+   curl https://your-app.railway.app/healthz
+   ```
+
+2. **Expected health check response**
+   ```json
+   {
+     "status": "healthy",
+     "name": "Team Alchemy",
+     "version": "0.1.0",
+     "environment": "production",
+     "timestamp": "2024-01-01T00:00:00"
+   }
+   ```
+
+3. **Check railway.json health check configuration**
+   ```json
+   {
+     "deploy": {
+       "healthcheckPath": "/healthz",
+       "healthcheckTimeout": 300,
+       "restartPolicyType": "ON_FAILURE"
+     }
+   }
+   ```
+
+4. **Increase health check timeout if needed**
+   - Default is 300 seconds
+   - Increase if database initialization takes longer
+
+### Logging and Monitoring
+
+**View Real-time Logs:**
+```bash
+# Railway CLI
+railway logs
+
+# Or in Railway Dashboard
+# Service → Logs tab
+```
+
+**Key Log Messages to Look For:**
+
+✓ Success indicators:
+```
+✓ Environment variables validated successfully
+✓ Database initialized successfully
+✓ Static file serving configured successfully
+```
+
+✗ Error indicators:
+```
+✗ Environment validation failed
+✗ Database initialization failed
+✗ Static directory not found
+```
+
+**Log Levels:**
+- Production: INFO (reduces noise from third-party libraries)
+- Development: DEBUG (shows all details)
+
+**Filter Logs by Level:**
+```bash
+# In Railway logs, use the filter dropdown
+# Select: Error, Warning, Info, or Debug
+```
+
+### Performance Issues
+
+**Symptoms:**
+- Slow response times
+- Timeouts
+- High memory usage
+
+**Solutions:**
+
+1. **Check Railway metrics**
+   - Service → Metrics tab
+   - Monitor CPU, Memory, Network
+
+2. **Optimize database queries**
+   ```python
+   # Enable query logging temporarily
+   DATABASE_ECHO=True
+   ```
+
+3. **Scale resources**
+   - Upgrade Railway plan for more resources
+   - Enable horizontal scaling (paid plans)
+
+4. **Add database indexes**
+   ```sql
+   -- For frequently queried columns
+   CREATE INDEX idx_column_name ON table_name(column_name);
+   ```
+
+5. **Implement caching**
+   - Use Redis for frequently accessed data
+   - Cache API responses where appropriate
+
+### Getting Help
+
+If problems persist:
+
+1. **Check Railway status**
+   - https://status.railway.app/
+
+2. **Review Railway documentation**
+   - https://docs.railway.app/
+
+3. **Railway community support**
+   - Discord: https://discord.gg/railway
+   - Help Center: https://help.railway.app/
+
+4. **Application issues**
+   - GitHub Issues: https://github.com/DoctorDoveDragon/Team-Alchemy-APP/issues
+   - Include: deployment logs, error messages, environment details
 
 ## Monitoring and Logs
 

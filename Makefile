@@ -1,4 +1,4 @@
-.PHONY: help install install-dev test lint format clean run docker-up docker-down
+.PHONY: help install install-dev test lint format clean run docker-up docker-down migrate
 
 help:
 	@echo "Team Alchemy - Makefile commands"
@@ -13,6 +13,8 @@ help:
 	@echo "docker-up      - Start Docker containers"
 	@echo "docker-down    - Stop Docker containers"
 	@echo "init-db        - Initialize database"
+	@echo "migrate        - Run database migrations"
+	@echo "migration      - Create new migration"
 	@echo "load-sample    - Load sample data"
 
 install:
@@ -62,6 +64,13 @@ docker-logs:
 
 init-db:
 	python scripts/setup_database.py
+
+migrate:
+	python scripts/migrate_database.py
+
+migration:
+	@read -p "Enter migration message: " msg; \
+	alembic revision --autogenerate -m "$$msg"
 
 load-sample:
 	python scripts/load_sample_data.py

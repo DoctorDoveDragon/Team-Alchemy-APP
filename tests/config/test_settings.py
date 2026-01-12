@@ -6,8 +6,13 @@ import pytest
 from config.settings import Settings, get_settings
 
 
-def test_settings_default_values():
+def test_settings_default_values(monkeypatch):
     """Test that settings have correct default values."""
+    # Clear any environment variables that might affect defaults
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    monkeypatch.delenv("SECRET_KEY", raising=False)
+    monkeypatch.delenv("JWT_SECRET", raising=False)
+    
     settings = Settings()
     
     assert settings.app_name == "Team Alchemy"
@@ -101,6 +106,8 @@ def test_settings_invalid_port_fallback(monkeypatch):
 
 def test_settings_jwt_secret_backward_compatibility(monkeypatch):
     """Test that JWT_SECRET is supported for backward compatibility."""
+    # Clear SECRET_KEY to test JWT_SECRET fallback
+    monkeypatch.delenv("SECRET_KEY", raising=False)
     monkeypatch.setenv("JWT_SECRET", "jwt-test-secret")
     
     settings = Settings()

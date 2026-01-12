@@ -52,7 +52,7 @@ pip install -r requirements.txt
 pip install -e .
 
 # Set environment variables
-export DATABASE_URL="postgresql://user:pass@localhost:5432/teamalchemy"
+export DATABASE_URL="postgresql://teamalchemy:teamalchemy@localhost:5432/teamalchemy"
 export SECRET_KEY="your-secret-key-here"
 
 # Run the server

@@ -29,17 +29,17 @@ services:
 
   backend:
     build:
-      context: ./server
+      context: .
       dockerfile: Dockerfile
-    command: uvicorn app.main:app --host 0.0.0.0 --port 5000 --reload
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
-      - ./server:/app
+      - .:/app
     ports:
-      - "5000:5000"
+      - "8000:8000"
     environment:
       - DATABASE_URL=postgresql://teamalchemy:teamalchemy@db:5432/teamalchemy
       - REDIS_URL=redis://redis:6379/0
-      - JWT_SECRET=${JWT_SECRET:-change-this-secret-key}
+      - SECRET_KEY=${SECRET_KEY:-change-this-secret-key}
       - ENVIRONMENT=development
     depends_on:
       db:
@@ -54,7 +54,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - VITE_API_URL=http://localhost:5000
+      - VITE_API_URL=http://localhost:8000
     volumes:
       - ./frontend:/app
       - /app/node_modules

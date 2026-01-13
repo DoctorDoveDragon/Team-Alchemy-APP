@@ -4,20 +4,21 @@ Main FastAPI application entry point.
 
 import os
 import re
+from contextlib import asynccontextmanager
+from datetime import datetime
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from contextlib import asynccontextmanager
-from pathlib import Path
-from datetime import datetime
+from fastapi.staticfiles import StaticFiles
 
-from team_alchemy.api.routes import assessment, analysis, teams
+from config.logging_config import setup_logging
+from config.settings import get_settings
 from team_alchemy.api.middleware.auth import AuthMiddleware
 from team_alchemy.api.middleware.validation import ValidationMiddleware
+from team_alchemy.api.routes import analysis, assessment, teams
 from team_alchemy.data.repository import init_db
-from config.settings import get_settings
-from config.logging_config import setup_logging
 
 settings = get_settings()
 logger = setup_logging(settings.log_level, settings.log_format)
@@ -27,13 +28,24 @@ try:
     settings.validate_critical_env_vars()
     logger.info("✓ Environment variables validated successfully")
 except ValueError as e:
-    logger.error(f"✗ Environment validation failed: {e}")
-    raise
+    logger.error("=" * 60)
+    logger.error("CRITICAL: Environment validation failed")
+    logger.error("=" * 60)
+    logger.error(f"Error details: {e}")
+    logger.error("")
+    logger.error("Required environment variables for Railway deployment:")
+    logger.error("  - SECRET_KEY: Must be set and >= 32 characters in production")
+    logger.error("  - DATABASE_URL: Must be valid PostgreSQL/SQLite/MySQL URL")
+    logger.error("  - ENVIRONMENT: Set to 'production' or 'development'")
+    logger.error("")
+    logger.error("Set these in Railway project settings under 'Variables' tab")
+    logger.error("=" * 60)
+    raise SystemExit(1)
 
 # Log application startup information
-logger.info("="*60)
+logger.info("=" * 60)
 logger.info("STARTING TEAM ALCHEMY APPLICATION")
-logger.info("="*60)
+logger.info("=" * 60)
 logger.info(f"App Name: {settings.app_name}")
 logger.info(f"Version: {settings.app_version}")
 logger.info(f"Environment: {settings.environment}")
@@ -43,37 +55,44 @@ logger.info(f"API Port: {settings.api_port}")
 logger.info(f"API Prefix: {settings.api_prefix}")
 logger.info(f"CORS Origins: {settings.cors_origins}")
 # Sanitize database URL to hide credentials
-db_url_sanitized = re.sub(r'://[^:]*:[^@]*@', '://***:***@', settings.database_url) if '@' in settings.database_url else settings.database_url
+db_url_sanitized = (
+    re.sub(r"://[^:]*:[^@]*@", "://***:***@", settings.database_url)
+    if "@" in settings.database_url
+    else settings.database_url
+)
 logger.info(f"Database URL: {db_url_sanitized}")
 logger.info(f"Log Level: {settings.log_level}")
-logger.info("="*60)
+logger.info("=" * 60)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan events."""
     # Startup
-    logger.info("="*60)
+    logger.info("=" * 60)
     logger.info("LIFESPAN STARTUP EVENT")
-    logger.info("="*60)
+    logger.info("=" * 60)
     logger.info("Starting Team Alchemy application...")
-    
+
     try:
         init_db()
         logger.info("✓ Database initialized successfully")
     except Exception as e:
-        logger.error(f"✗ Database initialization failed: {e}", exc_info=True)
-        raise
-    
-    logger.info("="*60)
-    
+        # Don't crash - log warning and continue
+        # This allows the app to start even if DB is temporarily unavailable
+        logger.warning(f"⚠ Database initialization failed: {e}")
+        logger.warning("⚠ App will start but database features may not work until DB is available")
+        logger.warning("⚠ Check DATABASE_URL environment variable and database service status")
+
+    logger.info("=" * 60)
+
     yield
-    
+
     # Shutdown
-    logger.info("="*60)
+    logger.info("=" * 60)
     logger.info("LIFESPAN SHUTDOWN EVENT")
     logger.info("Shutting down Team Alchemy application...")
-    logger.info("="*60)
+    logger.info("=" * 60)
 
 
 # Create FastAPI application
@@ -123,8 +142,43 @@ async def healthz():
         "name": settings.app_name,
         "version": settings.app_version,
         "environment": settings.environment,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat(),
     }
+
+
+@app.get("/healthz/detailed")
+async def healthz_detailed():
+    """Detailed health check with component status."""
+    if settings.environment.lower() == "production":
+        # Don't expose internal details in production
+        raise HTTPException(status_code=404, detail="Not found")
+
+    health_status = {
+        "status": "healthy",
+        "name": settings.app_name,
+        "version": settings.app_version,
+        "environment": settings.environment,
+        "timestamp": datetime.utcnow().isoformat(),
+        "components": {},
+    }
+
+    # Check database connectivity
+    try:
+        from sqlalchemy import text
+
+        from team_alchemy.data.repository import SessionLocal
+
+        session = SessionLocal()
+        try:
+            session.execute(text("SELECT 1"))
+            health_status["components"]["database"] = "connected"
+        finally:
+            session.close()
+    except Exception as e:
+        health_status["components"]["database"] = f"error: {str(e)[:100]}"
+        health_status["status"] = "degraded"
+
+    return health_status
 
 
 @app.get("/health")
@@ -144,9 +198,9 @@ async def debug_info():
     """Debug endpoint to check application configuration (disable in production)."""
     if settings.environment.lower() == "production":
         raise HTTPException(status_code=404, detail="Not found")
-    
+
     static_dir = Path(__file__).parent / "static"
-    
+
     return {
         "environment": settings.environment,
         "debug": settings.debug,
@@ -166,16 +220,16 @@ async def debug_info():
 def setup_static_files():
     """Setup static file serving for the frontend."""
     static_dir = Path(__file__).parent / "static"
-    
-    logger.info("="*60)
+
+    logger.info("=" * 60)
     logger.info("SETTING UP STATIC FILE SERVING")
-    logger.info("="*60)
+    logger.info("=" * 60)
     logger.info(f"Static directory path: {static_dir}")
     logger.info(f"Static directory exists: {static_dir.exists()}")
-    
+
     if static_dir.exists():
         logger.info(f"Static directory resolved to: {static_dir.resolve()}")
-        
+
         # List contents
         try:
             contents = list(static_dir.iterdir())
@@ -186,10 +240,10 @@ def setup_static_files():
                 logger.info(f"  ... and {len(contents) - 10} more items")
         except Exception as e:
             logger.error(f"Error listing static directory: {e}")
-        
+
         # Cache resolved static directory path for security checks
         resolved_static_dir = static_dir.resolve()
-        
+
         # Mount assets directory if it exists
         assets_dir = static_dir / "assets"
         if assets_dir.exists():
@@ -197,24 +251,24 @@ def setup_static_files():
             app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="static-assets")
         else:
             logger.warning(f"Assets directory not found: {assets_dir}")
-        
+
         # Check for index.html
         index_path = static_dir / "index.html"
         if index_path.exists():
             logger.info(f"✓ Found index.html at {index_path}")
         else:
             logger.warning(f"✗ index.html NOT FOUND at {index_path}")
-        
+
         @app.get("/{full_path:path}")
         async def serve_frontend(full_path: str):
             """Serve frontend application
-            
+
             Note: This catch-all route is registered after all API routes to ensure
             API routes take precedence. Any future API routes should be registered
             before calling setup_static_files() to ensure they are not overridden.
             """
             logger.debug(f"Serving static file request: {full_path}")
-            
+
             # Prevent path traversal attacks
             try:
                 file_path = (static_dir / full_path).resolve()
@@ -228,29 +282,29 @@ def setup_static_files():
                     return FileResponse(index_path)
                 logger.error(f"index.html not found at {index_path}")
                 return {"message": "Frontend not built"}
-            
+
             # If requesting a file that exists, serve it
             if file_path.is_file():
                 logger.debug(f"Serving file: {file_path}")
                 return FileResponse(file_path)
-            
+
             # Otherwise, serve index.html for client-side routing
             logger.debug(f"File not found, serving index.html for SPA routing: {full_path}")
             index_path = static_dir / "index.html"
             if index_path.exists():
                 return FileResponse(index_path)
-            
+
             logger.error(f"Cannot serve {full_path}, index.html not found")
             return {"message": "Frontend not built"}
-        
+
         logger.info("✓ Static file serving configured successfully")
-        logger.info("="*60)
+        logger.info("=" * 60)
     else:
-        logger.warning("="*60)
+        logger.warning("=" * 60)
         logger.warning(f"STATIC DIRECTORY NOT FOUND: {static_dir}")
         logger.warning("Frontend will NOT be served!")
-        logger.warning("="*60)
-        
+        logger.warning("=" * 60)
+
         @app.get("/")
         async def root():
             """Root endpoint when no static files are available."""
@@ -262,9 +316,9 @@ def setup_static_files():
                 "environment": settings.environment,
                 "docs": "/docs",
                 "api": settings.api_prefix,
-                "warning": "Frontend not built - static directory not found"
+                "warning": "Frontend not built - static directory not found",
             }
-        
+
         logger.info("✓ Fallback root endpoint configured")
 
 
@@ -279,10 +333,10 @@ logger.info("Application startup complete!")
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     run_port = int(os.environ.get("PORT", settings.api_port))
     logger.info(f"Starting uvicorn server on {settings.api_host}:{run_port}")
-    
+
     uvicorn.run(
         "main:app",
         host=settings.api_host,

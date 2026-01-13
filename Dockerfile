@@ -33,7 +33,10 @@ COPY pyproject.toml setup.py ./
 COPY README.md ./
 COPY src/ ./src/
 COPY config/ ./config/
+COPY scripts/ ./scripts/
 COPY main.py ./
+COPY alembic.ini ./
+COPY alembic/ ./alembic/
 
 # Install the team_alchemy package
 RUN pip install --no-cache-dir -e .
@@ -50,4 +53,5 @@ EXPOSE 8000
 
 # Use shell form to properly expand $PORT environment variable at runtime
 # Railway sets PORT dynamically, so we need shell expansion
-CMD sh -c "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"
+# Run migrations before starting the server, but continue even if migrations fail
+CMD sh -c "python scripts/migrate_database.py || echo 'Migration failed, continuing...' && uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"

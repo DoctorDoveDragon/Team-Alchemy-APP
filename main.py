@@ -27,8 +27,19 @@ try:
     settings.validate_critical_env_vars()
     logger.info("✓ Environment variables validated successfully")
 except ValueError as e:
-    logger.error(f"✗ Environment validation failed: {e}")
-    raise
+    logger.error("="*60)
+    logger.error("CRITICAL: Environment validation failed")
+    logger.error("="*60)
+    logger.error(f"Error details: {e}")
+    logger.error("")
+    logger.error("Required environment variables for Railway deployment:")
+    logger.error("  - SECRET_KEY: Must be set and >= 32 characters in production")
+    logger.error("  - DATABASE_URL: Must be valid PostgreSQL/SQLite/MySQL URL")
+    logger.error("  - ENVIRONMENT: Set to 'production' or 'development'")
+    logger.error("")
+    logger.error("Set these in Railway project settings under 'Variables' tab")
+    logger.error("="*60)
+    raise SystemExit(1)
 
 # Log application startup information
 logger.info("="*60)
@@ -62,8 +73,11 @@ async def lifespan(app: FastAPI):
         init_db()
         logger.info("✓ Database initialized successfully")
     except Exception as e:
-        logger.error(f"✗ Database initialization failed: {e}", exc_info=True)
-        raise
+        # Don't crash - log warning and continue
+        # This allows the app to start even if DB is temporarily unavailable
+        logger.warning(f"⚠ Database initialization failed: {e}")
+        logger.warning("⚠ App will start but database features may not work until DB is available")
+        logger.warning("⚠ Check DATABASE_URL environment variable and database service status")
     
     logger.info("="*60)
     
@@ -125,6 +139,35 @@ async def healthz():
         "environment": settings.environment,
         "timestamp": datetime.utcnow().isoformat()
     }
+
+
+@app.get("/healthz/detailed")
+async def healthz_detailed():
+    """Detailed health check with component status."""
+    if settings.environment.lower() == "production":
+        # Don't expose internal details in production
+        raise HTTPException(status_code=404, detail="Not found")
+    
+    health_status = {
+        "status": "healthy",
+        "name": settings.app_name,
+        "version": settings.app_version,
+        "environment": settings.environment,
+        "timestamp": datetime.utcnow().isoformat(),
+        "components": {}
+    }
+    
+    # Check database connectivity
+    try:
+        from team_alchemy.data.repository import get_session
+        with get_session() as session:
+            session.execute("SELECT 1")
+        health_status["components"]["database"] = "connected"
+    except Exception as e:
+        health_status["components"]["database"] = f"error: {str(e)[:100]}"
+        health_status["status"] = "degraded"
+    
+    return health_status
 
 
 @app.get("/health")

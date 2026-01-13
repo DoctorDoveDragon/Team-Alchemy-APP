@@ -164,11 +164,16 @@ async def healthz_detailed():
 
     # Check database connectivity
     try:
-        from team_alchemy.data.repository import get_session
+        from sqlalchemy import text
 
-        with get_session() as session:
-            session.execute("SELECT 1")
-        health_status["components"]["database"] = "connected"
+        from team_alchemy.data.repository import SessionLocal
+
+        session = SessionLocal()
+        try:
+            session.execute(text("SELECT 1"))
+            health_status["components"]["database"] = "connected"
+        finally:
+            session.close()
     except Exception as e:
         health_status["components"]["database"] = f"error: {str(e)[:100]}"
         health_status["status"] = "degraded"

@@ -2,8 +2,9 @@
 Integration tests for API endpoints.
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
 from fastapi.testclient import TestClient
 
 # Note: These are placeholder tests that will need a proper test setup
@@ -19,6 +20,7 @@ def test_placeholder():
 def client():
     """Create test client."""
     from main import app
+
     return TestClient(app)
 
 
@@ -52,9 +54,10 @@ def test_healthz_detailed_endpoint_development(client, monkeypatch):
     """Test detailed health check endpoint in development environment."""
     # Set environment to development
     from config.settings import get_settings
+
     settings = get_settings()
     monkeypatch.setattr(settings, "environment", "development")
-    
+
     response = client.get("/healthz/detailed")
     assert response.status_code == 200
     data = response.json()
@@ -75,9 +78,10 @@ def test_healthz_detailed_endpoint_production(client, monkeypatch):
     """Test detailed health check endpoint returns 404 in production."""
     # Set environment to production
     from config.settings import get_settings
+
     settings = get_settings()
     monkeypatch.setattr(settings, "environment", "production")
-    
+
     response = client.get("/healthz/detailed")
     assert response.status_code == 404
 
@@ -97,7 +101,7 @@ def test_root_endpoint(client):
 #         "description": "A test assessment",
 #         "questions": []
 #     }
-#     
+#
 #     response = client.post("/assessments/", json=assessment_data)
 #     # Placeholder - would check response
 #     assert True

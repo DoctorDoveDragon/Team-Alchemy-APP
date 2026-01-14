@@ -55,5 +55,3 @@ EXPOSE 8000
 # Railway sets PORT dynamically, so we need shell expansion
 # Run migrations before starting the server, but continue even if migrations fail
 CMD sh -c "python scripts/migrate_database.py || echo 'Migration failed, continuing...' && uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"
-EXPOSE 8080
-CMD sh -c "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"

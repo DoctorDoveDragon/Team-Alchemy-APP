@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException
 
 from team_alchemy.core.archetypes.definitions import (
     ArchetypeType,
+    ArchetypeDefinition,
     get_archetype_definitions,
     get_archetype_by_type,
 )
@@ -15,7 +16,7 @@ from team_alchemy.api.schemas.archetypes import ArchetypeSchema, ArchetypesRespo
 router = APIRouter(prefix="/archetypes", tags=["archetypes"])
 
 
-def _archetype_to_schema(archetype_def) -> ArchetypeSchema:
+def _archetype_to_schema(archetype_def: ArchetypeDefinition) -> ArchetypeSchema:
     """Convert ArchetypeDefinition to ArchetypeSchema."""
     return ArchetypeSchema(
         archetype_type=archetype_def.archetype_type.value,
@@ -71,11 +72,5 @@ async def get_archetype(archetype_type: str):
 
     # Get the archetype definition
     archetype_def = get_archetype_by_type(arch_type_enum)
-
-    if archetype_def is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Archetype type '{archetype_type}' not found",
-        )
 
     return _archetype_to_schema(archetype_def)

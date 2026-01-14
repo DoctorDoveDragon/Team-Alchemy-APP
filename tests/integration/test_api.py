@@ -94,6 +94,59 @@ def test_root_endpoint(client):
     # Just verify we get a response
 
 
+def test_get_all_archetypes(client):
+    """Test GET /api/v1/archetypes/ endpoint."""
+    response = client.get("/api/v1/archetypes/")
+    assert response.status_code == 200
+    data = response.json()
+    assert "archetypes" in data
+    assert isinstance(data["archetypes"], dict)
+    # Verify at least one archetype is returned
+    assert len(data["archetypes"]) > 0
+    # Verify the leader archetype exists
+    assert "leader" in data["archetypes"]
+    leader = data["archetypes"]["leader"]
+    assert leader["archetype_type"] == "leader"
+    assert leader["name"] == "The Leader"
+    assert "description" in leader
+    assert "core_traits" in leader
+    assert "strengths" in leader
+    assert "challenges" in leader
+    assert "jungian_mapping" in leader
+
+
+def test_get_specific_archetype(client):
+    """Test GET /api/v1/archetypes/{archetype_type} endpoint."""
+    response = client.get("/api/v1/archetypes/leader")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["archetype_type"] == "leader"
+    assert data["name"] == "The Leader"
+    assert "description" in data
+    assert isinstance(data["core_traits"], list)
+    assert isinstance(data["strengths"], list)
+    assert isinstance(data["challenges"], list)
+    assert isinstance(data["jungian_mapping"], dict)
+
+
+def test_get_nonexistent_archetype(client):
+    """Test GET /api/v1/archetypes/{archetype_type} with invalid type."""
+    response = client.get("/api/v1/archetypes/nonexistent")
+    assert response.status_code == 404
+    data = response.json()
+    assert "detail" in data
+    assert "not found" in data["detail"].lower()
+
+
+def test_archetype_case_insensitive(client):
+    """Test that archetype lookup is case-insensitive."""
+    # Test with uppercase
+    response = client.get("/api/v1/archetypes/LEADER")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["archetype_type"] == "leader"
+
+
 # def test_create_assessment(client):
 #     """Test creating an assessment."""
 #     assessment_data = {

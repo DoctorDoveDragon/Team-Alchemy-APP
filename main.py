@@ -17,7 +17,7 @@ from config.logging_config import setup_logging
 from config.settings import get_settings
 from team_alchemy.api.middleware.auth import AuthMiddleware
 from team_alchemy.api.middleware.validation import ValidationMiddleware
-from team_alchemy.api.routes import analysis, assessment, teams
+from team_alchemy.api.routes import analysis, assessment, teams, archetypes
 from team_alchemy.data.repository import init_db
 
 settings = get_settings()
@@ -129,6 +129,10 @@ app.include_router(
 )
 app.include_router(
     teams.router,
+    prefix=settings.api_prefix,
+)
+app.include_router(
+    archetypes.router,
     prefix=settings.api_prefix,
 )
 

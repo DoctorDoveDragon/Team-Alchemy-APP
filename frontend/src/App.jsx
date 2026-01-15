@@ -2,11 +2,14 @@ import { useState, useEffect } from 'react'
 import CitationStyleDropdown from './components/common/Dropdown/CitationStyleDropdown'
 import VerificationButton from './components/common/Button/VerificationButton'
 import MethodologyWizard from './components/academic/MethodologyWizard/MethodologyWizard'
+import TeamAnalysisDashboard from './components/psychology/TeamAnalysis/TeamAnalysisDashboard'
+import CaseStudiesBrowser from './components/psychology/CaseStudies/CaseStudiesBrowser'
 
 function App() {
   const [selectedStyle, setSelectedStyle] = useState('APA')
   const [isVerified, setIsVerified] = useState(false)
   const [healthStatus, setHealthStatus] = useState(null)
+  const [activeTab, setActiveTab] = useState('psychology')
 
   useEffect(() => {
     // Check backend health
@@ -61,36 +64,92 @@ function App() {
           )}
         </header>
 
-        <div className="max-w-4xl mx-auto space-y-8">
-          {/* Citation Style Selection */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <h2 className="text-2xl font-semibold text-gray-800 dark:text-white mb-4">
-              Citation Style
-            </h2>
-            <CitationStyleDropdown
-              selectedStyle={selectedStyle}
-              onStyleChange={setSelectedStyle}
-            />
+        {/* Tab Navigation */}
+        <div className="max-w-4xl mx-auto mb-8">
+          <div className="flex space-x-2 bg-white dark:bg-gray-800 rounded-lg shadow p-1">
+            <button
+              onClick={() => setActiveTab('psychology')}
+              className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'psychology'
+                  ? 'bg-indigo-600 text-white'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+            >
+              Team Psychology
+            </button>
+            <button
+              onClick={() => setActiveTab('cases')}
+              className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'cases'
+                  ? 'bg-indigo-600 text-white'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+            >
+              Case Studies
+            </button>
+            <button
+              onClick={() => setActiveTab('academic')}
+              className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'academic'
+                  ? 'bg-indigo-600 text-white'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+            >
+              Academic Tools
+            </button>
           </div>
+        </div>
 
-          {/* Verification Section */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <h2 className="text-2xl font-semibold text-gray-800 dark:text-white mb-4">
-              Document Verification
-            </h2>
-            <VerificationButton
-              onVerify={handleVerification}
-              isVerified={isVerified}
-            />
-          </div>
+        <div className="max-w-4xl mx-auto">
+          {/* Psychology Tab */}
+          {activeTab === 'psychology' && (
+            <TeamAnalysisDashboard />
+          )}
 
-          {/* Methodology Wizard */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <h2 className="text-2xl font-semibold text-gray-800 dark:text-white mb-4">
-              Research Methodology
-            </h2>
-            <MethodologyWizard />
-          </div>
+          {/* Case Studies Tab */}
+          {activeTab === 'cases' && (
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+              <h2 className="text-2xl font-semibold text-gray-800 dark:text-white mb-4">
+                Psychological Case Studies
+              </h2>
+              <CaseStudiesBrowser />
+            </div>
+          )}
+
+          {/* Academic Tools Tab */}
+          {activeTab === 'academic' && (
+            <div className="space-y-8">
+              {/* Citation Style Selection */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                <h2 className="text-2xl font-semibold text-gray-800 dark:text-white mb-4">
+                  Citation Style
+                </h2>
+                <CitationStyleDropdown
+                  selectedStyle={selectedStyle}
+                  onStyleChange={setSelectedStyle}
+                />
+              </div>
+
+              {/* Verification Section */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                <h2 className="text-2xl font-semibold text-gray-800 dark:text-white mb-4">
+                  Document Verification
+                </h2>
+                <VerificationButton
+                  onVerify={handleVerification}
+                  isVerified={isVerified}
+                />
+              </div>
+
+              {/* Methodology Wizard */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                <h2 className="text-2xl font-semibold text-gray-800 dark:text-white mb-4">
+                  Research Methodology
+                </h2>
+                <MethodologyWizard />
+              </div>
+            </div>
+          )}
         </div>
 
         <footer className="text-center mt-12 text-gray-600 dark:text-gray-400">

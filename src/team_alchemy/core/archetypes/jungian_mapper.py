@@ -82,6 +82,72 @@ class JungianMapper:
                 "strengths": ["Strategic planning", "Systems thinking", "Independence"],
                 "shadow": "May neglect emotional considerations",
             },
+            MBTIType.INTP: {
+                "function_stack": [
+                    JungianFunction.INTROVERTED_THINKING,
+                    JungianFunction.EXTRAVERTED_INTUITION,
+                    JungianFunction.INTROVERTED_SENSING,
+                    JungianFunction.EXTRAVERTED_FEELING,
+                ],
+                "archetype_affinity": ["ANALYST", "INNOVATOR"],
+                "strengths": ["Logical analysis", "Theoretical thinking", "Problem solving"],
+                "shadow": "May struggle with emotional expression",
+            },
+            MBTIType.ENTJ: {
+                "function_stack": [
+                    JungianFunction.EXTRAVERTED_THINKING,
+                    JungianFunction.INTROVERTED_INTUITION,
+                    JungianFunction.EXTRAVERTED_SENSING,
+                    JungianFunction.INTROVERTED_FEELING,
+                ],
+                "archetype_affinity": ["LEADER", "VISIONARY"],
+                "strengths": ["Leadership", "Strategic execution", "Decisiveness"],
+                "shadow": "May be overly critical or dominating",
+            },
+            MBTIType.ENTP: {
+                "function_stack": [
+                    JungianFunction.EXTRAVERTED_INTUITION,
+                    JungianFunction.INTROVERTED_THINKING,
+                    JungianFunction.EXTRAVERTED_FEELING,
+                    JungianFunction.INTROVERTED_SENSING,
+                ],
+                "archetype_affinity": ["INNOVATOR", "CHALLENGER"],
+                "strengths": ["Innovation", "Debate", "Quick thinking"],
+                "shadow": "May lack follow-through on projects",
+            },
+            MBTIType.INFJ: {
+                "function_stack": [
+                    JungianFunction.INTROVERTED_INTUITION,
+                    JungianFunction.EXTRAVERTED_FEELING,
+                    JungianFunction.INTROVERTED_THINKING,
+                    JungianFunction.EXTRAVERTED_SENSING,
+                ],
+                "archetype_affinity": ["COUNSELOR", "VISIONARY"],
+                "strengths": ["Insight", "Empathy", "Vision for people"],
+                "shadow": "May become overly idealistic",
+            },
+            MBTIType.INFP: {
+                "function_stack": [
+                    JungianFunction.INTROVERTED_FEELING,
+                    JungianFunction.EXTRAVERTED_INTUITION,
+                    JungianFunction.INTROVERTED_SENSING,
+                    JungianFunction.EXTRAVERTED_THINKING,
+                ],
+                "archetype_affinity": ["HEALER", "IDEALIST"],
+                "strengths": ["Authenticity", "Values-driven", "Creativity"],
+                "shadow": "May be overly sensitive to criticism",
+            },
+            MBTIType.ENFJ: {
+                "function_stack": [
+                    JungianFunction.EXTRAVERTED_FEELING,
+                    JungianFunction.INTROVERTED_INTUITION,
+                    JungianFunction.EXTRAVERTED_SENSING,
+                    JungianFunction.INTROVERTED_THINKING,
+                ],
+                "archetype_affinity": ["HARMONIZER", "LEADER"],
+                "strengths": ["Inspiring others", "Empathy", "Communication"],
+                "shadow": "May neglect own needs for others",
+            },
             MBTIType.ENFP: {
                 "function_stack": [
                     JungianFunction.EXTRAVERTED_INTUITION,
@@ -93,7 +159,94 @@ class JungianMapper:
                 "strengths": ["Creativity", "Enthusiasm", "Understanding people"],
                 "shadow": "May struggle with follow-through",
             },
-            # Add more MBTI types
+            MBTIType.ISTJ: {
+                "function_stack": [
+                    JungianFunction.INTROVERTED_SENSING,
+                    JungianFunction.EXTRAVERTED_THINKING,
+                    JungianFunction.INTROVERTED_FEELING,
+                    JungianFunction.EXTRAVERTED_INTUITION,
+                ],
+                "archetype_affinity": ["GUARDIAN", "ORGANIZER"],
+                "strengths": ["Reliability", "Detail-oriented", "Practical"],
+                "shadow": "May resist change or new ideas",
+            },
+            MBTIType.ISFJ: {
+                "function_stack": [
+                    JungianFunction.INTROVERTED_SENSING,
+                    JungianFunction.EXTRAVERTED_FEELING,
+                    JungianFunction.INTROVERTED_THINKING,
+                    JungianFunction.EXTRAVERTED_INTUITION,
+                ],
+                "archetype_affinity": ["PROTECTOR", "SUPPORTER"],
+                "strengths": ["Supportive", "Detail-oriented", "Loyal"],
+                "shadow": "May struggle with setting boundaries",
+            },
+            MBTIType.ESTJ: {
+                "function_stack": [
+                    JungianFunction.EXTRAVERTED_THINKING,
+                    JungianFunction.INTROVERTED_SENSING,
+                    JungianFunction.EXTRAVERTED_INTUITION,
+                    JungianFunction.INTROVERTED_FEELING,
+                ],
+                "archetype_affinity": ["LEADER", "ORGANIZER"],
+                "strengths": ["Organization", "Efficiency", "Leadership"],
+                "shadow": "May be inflexible or overly controlling",
+            },
+            MBTIType.ESFJ: {
+                "function_stack": [
+                    JungianFunction.EXTRAVERTED_FEELING,
+                    JungianFunction.INTROVERTED_SENSING,
+                    JungianFunction.EXTRAVERTED_INTUITION,
+                    JungianFunction.INTROVERTED_THINKING,
+                ],
+                "archetype_affinity": ["HARMONIZER", "SUPPORTER"],
+                "strengths": ["Supportive", "Social harmony", "Organized"],
+                "shadow": "May be overly concerned with others' opinions",
+            },
+            MBTIType.ISTP: {
+                "function_stack": [
+                    JungianFunction.INTROVERTED_THINKING,
+                    JungianFunction.EXTRAVERTED_SENSING,
+                    JungianFunction.INTROVERTED_INTUITION,
+                    JungianFunction.EXTRAVERTED_FEELING,
+                ],
+                "archetype_affinity": ["CRAFTSMAN", "ANALYST"],
+                "strengths": ["Practical problem-solving", "Technical skill", "Adaptability"],
+                "shadow": "May struggle with long-term planning",
+            },
+            MBTIType.ISFP: {
+                "function_stack": [
+                    JungianFunction.INTROVERTED_FEELING,
+                    JungianFunction.EXTRAVERTED_SENSING,
+                    JungianFunction.INTROVERTED_INTUITION,
+                    JungianFunction.EXTRAVERTED_THINKING,
+                ],
+                "archetype_affinity": ["ARTIST", "HARMONIZER"],
+                "strengths": ["Artistic", "Present-focused", "Empathetic"],
+                "shadow": "May avoid confrontation",
+            },
+            MBTIType.ESTP: {
+                "function_stack": [
+                    JungianFunction.EXTRAVERTED_SENSING,
+                    JungianFunction.INTROVERTED_THINKING,
+                    JungianFunction.EXTRAVERTED_FEELING,
+                    JungianFunction.INTROVERTED_INTUITION,
+                ],
+                "archetype_affinity": ["ENTREPRENEUR", "CHALLENGER"],
+                "strengths": ["Action-oriented", "Adaptable", "Practical"],
+                "shadow": "May act impulsively without planning",
+            },
+            MBTIType.ESFP: {
+                "function_stack": [
+                    JungianFunction.EXTRAVERTED_SENSING,
+                    JungianFunction.INTROVERTED_FEELING,
+                    JungianFunction.EXTRAVERTED_THINKING,
+                    JungianFunction.INTROVERTED_INTUITION,
+                ],
+                "archetype_affinity": ["ENTERTAINER", "HARMONIZER"],
+                "strengths": ["Enthusiasm", "People skills", "Spontaneity"],
+                "shadow": "May struggle with long-term focus",
+            },
         }
         
     def get_jungian_profile(self, mbti_type: MBTIType) -> Optional[JungianProfile]:

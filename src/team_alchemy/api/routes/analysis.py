@@ -229,25 +229,27 @@ async def get_individual_analysis(
     )
 
 
-@router.post("/compatibility")
-async def check_compatibility(
-    user_ids: List[int],
+class CompatibilityRequest(BaseModel):
+    """Request model for compatibility check."""
+    user_ids: List[int]
     mbti_types: List[str]
-) -> Dict[str, Any]:
+
+
+@router.post("/compatibility")
+async def check_compatibility(request: CompatibilityRequest) -> Dict[str, Any]:
     """
     Check compatibility between team members.
     
     Args:
-        user_ids: List of user IDs
-        mbti_types: List of corresponding MBTI types
+        request: Compatibility check request with user IDs and MBTI types
     """
-    if len(user_ids) != len(mbti_types):
+    if len(request.user_ids) != len(request.mbti_types):
         raise HTTPException(
             status_code=400,
             detail="user_ids and mbti_types must have same length"
         )
     
-    if len(user_ids) < 2:
+    if len(request.user_ids) < 2:
         raise HTTPException(
             status_code=400,
             detail="At least 2 users required for compatibility check"
@@ -256,18 +258,18 @@ async def check_compatibility(
     jungian_mapper = JungianMapper()
     
     compatibility_matrix = []
-    for i in range(len(user_ids)):
-        for j in range(i + 1, len(user_ids)):
+    for i in range(len(request.user_ids)):
+        for j in range(i + 1, len(request.user_ids)):
             try:
-                type1 = MBTIType(mbti_types[i].upper())
-                type2 = MBTIType(mbti_types[j].upper())
+                type1 = MBTIType(request.mbti_types[i].upper())
+                type2 = MBTIType(request.mbti_types[j].upper())
                 
                 compat = jungian_mapper.assess_type_compatibility(type1, type2)
                 compatibility_matrix.append({
-                    "user1": user_ids[i],
-                    "user2": user_ids[j],
-                    "mbti1": mbti_types[i],
-                    "mbti2": mbti_types[j],
+                    "user1": request.user_ids[i],
+                    "user2": request.user_ids[j],
+                    "mbti1": request.mbti_types[i],
+                    "mbti2": request.mbti_types[j],
                     **compat
                 })
             except ValueError:

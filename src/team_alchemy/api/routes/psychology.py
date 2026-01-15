@@ -258,6 +258,20 @@ async def list_defense_mechanisms():
 
 # Case Study Endpoints
 
+@router.get("/case-studies/frameworks")
+async def list_frameworks():
+    """
+    List all psychological frameworks used in case studies.
+    
+    Returns:
+        List of frameworks
+    """
+    mapper = CaseStudyMapper()
+    frameworks = mapper.get_all_frameworks()
+    
+    return {"frameworks": frameworks}
+
+
 @router.get("/case-studies", response_model=List[CaseStudyResponse])
 async def list_case_studies():
     """
@@ -376,17 +390,3 @@ async def get_intervention_recommendations(request: SimilarCasesRequest):
             for case in similar_cases
         ]
     )
-
-
-@router.get("/case-studies/frameworks")
-async def list_frameworks():
-    """
-    List all psychological frameworks used in case studies.
-    
-    Returns:
-        List of frameworks
-    """
-    mapper = CaseStudyMapper()
-    frameworks = mapper.get_all_frameworks()
-    
-    return {"frameworks": frameworks}

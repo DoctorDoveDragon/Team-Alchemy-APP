@@ -11,8 +11,8 @@ import os
 import tempfile
 
 
-@pytest.fixture
-async def test_db():
+@pytest.fixture(scope="function")
+def test_db():
     """Create a test database."""
     # Use a temporary database file
     with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
@@ -194,23 +194,24 @@ async def test_list_teams(test_db):
 @pytest.mark.asyncio
 async def test_add_team_member(test_db):
     """Test adding a member to a team."""
+    # Create user  directly in test database BEFORE starting client
+    from team_alchemy.data.repository import SessionLocal
+    db = SessionLocal()
+    try:
+        user = User(email="user@example.com", name="Test User")
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        user_id = user.id
+    finally:
+        db.close()
+    
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         # Create a team
         team_data = {"name": "Test Team"}
         team_response = await client.post("/api/v1/teams/", json=team_data)
         assert team_response.status_code == 201
         team_id = team_response.json()["id"]
-        
-        # Create a user directly in database
-        db = SessionLocal()
-        try:
-            user = User(email="user@example.com", name="Test User")
-            db.add(user)
-            db.commit()
-            db.refresh(user)
-            user_id = user.id
-        finally:
-            db.close()
         
         # Add member to team
         response = await client.post(f"/api/v1/teams/{team_id}/members/{user_id}")
@@ -255,23 +256,24 @@ async def test_add_team_member_user_not_found(test_db):
 @pytest.mark.asyncio
 async def test_add_team_member_duplicate(test_db):
     """Test adding the same member twice to a team."""
+    # Create user directly in test database BEFORE starting client
+    from team_alchemy.data.repository import SessionLocal
+    db = SessionLocal()
+    try:
+        user = User(email="user@example.com", name="Test User")
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        user_id = user.id
+    finally:
+        db.close()
+    
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         # Create a team
         team_data = {"name": "Test Team"}
         team_response = await client.post("/api/v1/teams/", json=team_data)
         assert team_response.status_code == 201
         team_id = team_response.json()["id"]
-        
-        # Create a user
-        db = SessionLocal()
-        try:
-            user = User(email="user@example.com", name="Test User")
-            db.add(user)
-            db.commit()
-            db.refresh(user)
-            user_id = user.id
-        finally:
-            db.close()
         
         # Add member first time
         response1 = await client.post(f"/api/v1/teams/{team_id}/members/{user_id}")
@@ -286,27 +288,28 @@ async def test_add_team_member_duplicate(test_db):
 @pytest.mark.asyncio
 async def test_add_multiple_members(test_db):
     """Test adding multiple members to a team."""
+    # Create multiple users directly in test database BEFORE starting client
+    from team_alchemy.data.repository import SessionLocal
+    db = SessionLocal()
+    try:
+        user1 = User(email="user1@example.com", name="User One")
+        user2 = User(email="user2@example.com", name="User Two")
+        user3 = User(email="user3@example.com", name="User Three")
+        db.add_all([user1, user2, user3])
+        db.commit()
+        db.refresh(user1)
+        db.refresh(user2)
+        db.refresh(user3)
+        user_ids = [user1.id, user2.id, user3.id]
+    finally:
+        db.close()
+    
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         # Create a team
         team_data = {"name": "Test Team"}
         team_response = await client.post("/api/v1/teams/", json=team_data)
         assert team_response.status_code == 201
         team_id = team_response.json()["id"]
-        
-        # Create multiple users
-        db = SessionLocal()
-        try:
-            user1 = User(email="user1@example.com", name="User One")
-            user2 = User(email="user2@example.com", name="User Two")
-            user3 = User(email="user3@example.com", name="User Three")
-            db.add_all([user1, user2, user3])
-            db.commit()
-            db.refresh(user1)
-            db.refresh(user2)
-            db.refresh(user3)
-            user_ids = [user1.id, user2.id, user3.id]
-        finally:
-            db.close()
         
         # Add all members
         for user_id in user_ids:

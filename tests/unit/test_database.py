@@ -15,28 +15,16 @@ def test_init_db_with_sqlite():
         tmp_db_path = tmp.name
     
     try:
+        # Store original DATABASE_URL
+        original_db_url = os.environ.get("DATABASE_URL")
+        
         # Set DATABASE_URL to use temp file
         os.environ["DATABASE_URL"] = f"sqlite:///{tmp_db_path}"
         
-        # Re-import to pick up new DATABASE_URL
+        # Import repository module
         import team_alchemy.data.repository as repo_module
-        from sqlalchemy import create_engine
-        from sqlalchemy.orm import sessionmaker
         
-        # Dispose of existing engine if it exists
-        if hasattr(repo_module, 'engine') and repo_module.engine is not None:
-            repo_module.engine.dispose()
-        
-        # Create new engine with the updated DATABASE_URL
-        repo_module.engine = create_engine(
-            f"sqlite:///{tmp_db_path}",
-            connect_args={"check_same_thread": False}
-        )
-        
-        # Update SessionLocal to use the new engine
-        repo_module.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=repo_module.engine)
-        
-        # Initialize database
+        # Initialize database - this will pick up the new DATABASE_URL
         repo_module.init_db()
         
         # Verify database file was created
@@ -54,9 +42,20 @@ def test_init_db_with_sqlite():
             pass
             
     finally:
-        # Cleanup
+        # Restore original DATABASE_URL
+        if original_db_url:
+            os.environ["DATABASE_URL"] = original_db_url
+        elif "DATABASE_URL" in os.environ:
+            del os.environ["DATABASE_URL"]
+        
+        # Cleanup database file
         if Path(tmp_db_path).exists():
             Path(tmp_db_path).unlink()
+        
+        # Dispose engine to clean up
+        import team_alchemy.data.repository as repo_module
+        if hasattr(repo_module, 'engine') and repo_module.engine is not None:
+            repo_module.engine.dispose()
 
 
 def test_get_db_session_lifecycle():
@@ -85,9 +84,10 @@ def test_database_url_configuration():
     from team_alchemy.data import repository
     
     # DATABASE_URL should be set from environment or default to SQLite
-    assert repository.DATABASE_URL is not None
-    assert isinstance(repository.DATABASE_URL, str)
-    assert any(db in repository.DATABASE_URL for db in ['sqlite', 'postgresql', 'postgres', 'mysql'])
+    database_url = repository.get_database_url()
+    assert database_url is not None
+    assert isinstance(database_url, str)
+    assert any(db in database_url for db in ['sqlite', 'postgresql', 'postgres', 'mysql'])
 
 
 def test_engine_creation():

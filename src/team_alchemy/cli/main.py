@@ -2,8 +2,6 @@
 Command-line interface for Team Alchemy.
 """
 
-import typer
-from typing import Optional
 import json
 import logging
 from enum import Enum
@@ -16,6 +14,21 @@ logger = logging.getLogger(__name__)
 # Constants
 DEFAULT_MBTI_TYPE = "INTJ"
 DEFAULT_ARCHETYPE = "Analyst"
+VALID_ASSESSMENT_TYPES = ["full", "mbti", "archetype", "defense"]
+
+JUNGIAN_FUNCTION_NAMES = {
+    "Ti": "Introverted Thinking",
+    "Te": "Extraverted Thinking",
+    "Fi": "Introverted Feeling",
+    "Fe": "Extraverted Feeling",
+    "Si": "Introverted Sensing",
+    "Se": "Extraverted Sensing",
+    "Ni": "Introverted Intuition",
+    "Ne": "Extraverted Intuition",
+}
+
+# Setup logging
+logger = logging.getLogger(__name__)
 
 JUNGIAN_FUNCTION_NAMES = {
     "Ti": "Introverted Thinking",
@@ -165,6 +178,138 @@ app = typer.Typer(
 )
 
 
+@contextmanager
+def get_db_session():
+    """Provide a database session with automatic cleanup."""
+    from team_alchemy.data.repository import SessionLocal
+
+    db = SessionLocal()
+    try:
+        yield db
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    finally:
+        db.close()
+
+
+def get_user_mbti_type(profile) -> tuple[str, bool]:
+    """
+    Extract MBTI type from profile.
+
+    Args:
+        profile: UserProfile object or None
+
+    Returns:
+        tuple[str, bool]: (mbti_type, is_default) where is_default indicates
+            whether the default MBTI type was used
+    """
+    if profile and profile.jungian_type:
+        return profile.jungian_type, False
+    if profile and profile.trait_scores:
+        if isinstance(profile.trait_scores, dict) and "mbti_type" in profile.trait_scores:
+            return profile.trait_scores["mbti_type"], False
+    return DEFAULT_MBTI_TYPE, True
+
+
+def display_jungian_profile(mbti_type: str, jungian_profile, mapping: dict) -> None:
+    """Display formatted Jungian profile information.
+
+    Args:
+        mbti_type: The MBTI type string
+        jungian_profile: JungianProfile object or None
+        mapping: Dictionary of type mappings
+    """
+    typer.echo("Jungian Profile:")
+    typer.echo(f"  MBTI Type: {mbti_type}")
+    typer.echo("  Function Stack:")
+
+    if jungian_profile:
+        functions = jungian_profile.get_function_stack()
+        positions = ["Dominant", "Auxiliary", "Tertiary", "Inferior"]
+        for i, func in enumerate(functions):
+            full_name = JUNGIAN_FUNCTION_NAMES.get(func.value, func.value)
+            typer.echo(f"    • {positions[i]}: {full_name} ({func.value})")
+    typer.echo()
+
+
+def display_archetypes(archetype_patterns, mapping: dict) -> None:
+    """Display dominant archetypes.
+
+    Args:
+        archetype_patterns: List of ArchetypePattern objects
+        mapping: Dictionary of type mappings
+    """
+    typer.echo("Dominant Archetypes:")
+    if archetype_patterns:
+        for pattern in archetype_patterns[:3]:
+            dominant_text = " - Dominant" if pattern.is_dominant() else ""
+            typer.echo(
+                f"  • {pattern.archetype.value.replace('_', ' ').title()} "
+                f"(strength: {pattern.strength:.2f}){dominant_text}"
+            )
+    else:
+        if mapping.get("archetype_affinity"):
+            for arch in mapping["archetype_affinity"][:2]:
+                typer.echo(f"  • {arch.title()} (strength: 0.85)")
+    typer.echo()
+
+
+def display_defense_mechanisms(defense_profiles, mbti_type: str) -> None:
+    """Display defense mechanisms.
+
+    Args:
+        defense_profiles: List of DefenseProfile objects
+        mbti_type: The MBTI type string
+    """
+    typer.echo("Defense Mechanisms:")
+    if defense_profiles:
+        for defense in defense_profiles[:3]:
+            typer.echo(
+                f"  • {defense.mechanism.value.replace('_', ' ').title()} "
+                f"(frequency: {defense.frequency:.2f}, "
+                f"adaptiveness: {defense.adaptiveness:.2f})"
+            )
+    else:
+        typer.echo("  • No behavioral data available for defense mechanism analysis")
+        typer.echo("    Provide behavioral observations for detailed analysis")
+    typer.echo()
+
+
+def display_recommendations(mbti_type: str, mapping: dict) -> None:
+    """Display personalized recommendations.
+
+    Args:
+        mbti_type: The MBTI type string
+        mapping: Dictionary of type mappings
+    """
+    typer.echo("Recommendations:")
+
+    # MBTI-based recommendations
+    if mbti_type in ["INTJ", "INTP"]:
+        typer.echo("  • Consider balancing analytical thinking with emotional awareness")
+    elif mbti_type in ["ENFP", "ENFJ"]:
+        typer.echo("  • Practice structured planning to complement your creativity")
+    elif mbti_type in ["ISTJ", "ESTJ"]:
+        typer.echo("  • Embrace flexibility and openness to new approaches")
+    elif mbti_type in ["INFJ", "INFP"]:
+        typer.echo("  • Balance idealism with practical considerations")
+
+    # Archetype-based recommendations
+    if mapping.get("archetype_affinity"):
+        primary_archetype = mapping["archetype_affinity"][0]
+        typer.echo(
+            f"  • Work on integrating {primary_archetype.title()} archetype more consciously"
+        )
+
+    # Shadow work recommendation
+    if mapping.get("shadow"):
+        typer.echo(f"  • Shadow work: {mapping['shadow']}")
+
+    typer.echo()
+
+
 @app.command()
 def init(db_url: Optional[str] = typer.Option(None, help="Database URL")):
     """Initialize the Team Alchemy database."""
@@ -186,10 +331,7 @@ def assess(
     assessment_type: AssessmentType = typer.Option(AssessmentType.FULL, help="Assessment type"),
 ):
     """Run an assessment for a user."""
-    from team_alchemy.data.repository import SessionLocal
-    from team_alchemy.data.models import User, UserProfile
     from team_alchemy.core.archetypes.jungian_mapper import JungianMapper, MBTIType
-    from team_alchemy.core.psychology.jungian import JungianAnalyzer
     from team_alchemy.core.psychology.freudian import FreudianAnalyzer
 
     logger.info(f"Starting {assessment_type.value} assessment for user {user_id}")
@@ -282,8 +424,6 @@ def assess(
 @app.command()
 def analyze_team(team_id: int = typer.Argument(..., help="Team ID to analyze")):
     """Analyze team dynamics and composition."""
-    from team_alchemy.data.repository import SessionLocal
-    from team_alchemy.data.models import Team, User, UserProfile, TeamAnalysis
     from team_alchemy.core.archetypes.jungian_mapper import JungianMapper, MBTIType
     from team_alchemy.core.psychology.jungian import (
         JungianAnalyzer,
@@ -452,8 +592,6 @@ def recommend(
     max_recommendations: int = typer.Option(5, help="Maximum recommendations"),
 ):
     """Generate recommendations for a team."""
-    from team_alchemy.data.repository import SessionLocal
-    from team_alchemy.data.models import Team, User, UserProfile, TeamAnalysis
     from team_alchemy.core.archetypes.jungian_mapper import JungianMapper, MBTIType
 
     logger.info(f"Generating recommendations for team {team_id}")

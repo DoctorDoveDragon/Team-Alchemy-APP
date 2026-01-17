@@ -7,11 +7,10 @@ from typing import List, Optional, Dict, Any
 from enum import Enum
 from pydantic import BaseModel, Field, validator
 from sqlalchemy import Column, Integer, String, DateTime, Float, JSON, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
-
-Base = declarative_base()
+# Import Base from main data models to ensure all ORM models use the same Base
+from team_alchemy.data.models import Base
 
 
 class QuestionType(str, Enum):

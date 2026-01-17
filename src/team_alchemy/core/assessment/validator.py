@@ -106,13 +106,14 @@ class AssessmentValidator:
         
         question_ids = set()
         for i, question in enumerate(questions):
-            # Check for duplicate IDs
-            if question.id in question_ids:
-                errors.append(ValidationError(
-                    field=f"questions[{i}].id",
-                    message=f"Duplicate question ID: {question.id}"
-                ))
-            question_ids.add(question.id)
+            # Check for duplicate IDs (only if question has an ID)
+            if hasattr(question, 'id') and question.id is not None:
+                if question.id in question_ids:
+                    errors.append(ValidationError(
+                        field=f"questions[{i}].id",
+                        message=f"Duplicate question ID: {question.id}"
+                    ))
+                question_ids.add(question.id)
             
             # Validate question text
             if not question.text or len(question.text.strip()) == 0:

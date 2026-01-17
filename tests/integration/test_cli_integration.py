@@ -23,9 +23,10 @@ def temp_db():
     os.environ["DATABASE_URL"] = "sqlite:///:memory:"
     
     # Re-import to pick up new DATABASE_URL
-    import importlib
     import team_alchemy.data.repository as repo_module
-    importlib.reload(repo_module)
+    
+    # Reinitialize engine with new DATABASE_URL
+    repo_module.reinit_engine()
     
     # Initialize database
     repo_module.init_db()
@@ -39,7 +40,8 @@ def temp_db():
         del os.environ["DATABASE_URL"]
     
     # Dispose of the engine to clean up the in-memory database
-    repo_module.engine.dispose()
+    if hasattr(repo_module, 'engine') and repo_module.engine is not None:
+        repo_module.engine.dispose()
 
 
 @pytest.fixture

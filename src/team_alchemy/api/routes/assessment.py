@@ -176,7 +176,10 @@ async def calculate_results(
         )
     
     # Get all questions - for now, get all questions in the database
-    # In production, you'd want to associate questions with assessments
+    # NOTE: This is a limitation in the current implementation. In production,
+    # questions should be associated with assessments via a foreign key or
+    # junction table. For now, this calculates based on all questions in the system.
+    # This works for the initial implementation where there's typically one assessment.
     questions = db.query(QuestionORM).all()
     questions_pydantic = [q.to_pydantic() for q in questions]
     

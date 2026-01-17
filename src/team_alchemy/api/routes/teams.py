@@ -53,7 +53,7 @@ async def create_team(team: TeamCreate, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(db_team)
         return db_team
-    except IntegrityError as e:
+    except IntegrityError:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -137,7 +137,7 @@ async def add_team_member(team_id: int, user_id: int, db: Session = Depends(get_
             "message": "Member added successfully",
             "team": team
         }
-    except IntegrityError as e:
+    except IntegrityError:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

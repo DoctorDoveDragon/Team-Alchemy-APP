@@ -39,6 +39,27 @@ def get_db() -> Generator[Session, None, None]:
         db.close()
 
 
+def reinit_engine():
+    """Reinitialize the engine and session factory with current DATABASE_URL."""
+    global engine, SessionLocal, DATABASE_URL
+    
+    # Get current DATABASE_URL from environment
+    DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./team_alchemy.db")
+    
+    # Dispose of old engine if it exists
+    if engine is not None:
+        engine.dispose()
+    
+    # Create new engine
+    engine = create_engine(
+        DATABASE_URL,
+        connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
+    )
+    
+    # Recreate session factory
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
 def init_db():
     """Initialize database tables."""
     Base.metadata.create_all(bind=engine)

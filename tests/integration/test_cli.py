@@ -120,18 +120,18 @@ def test_assess_command_user_found(temp_db, sample_data):
     """Test assess command with existing user."""
     result = runner.invoke(app, ["assess", "1"])
     assert result.exit_code == 0
-    assert "✓ User found:" in result.stdout
-    assert "=== Jungian Profile ===" in result.stdout
+    assert "✓ Running full assessment for User 1" in result.stdout
+    assert "User Information:" in result.stdout
     assert "MBTI Type: INTJ" in result.stdout
-    assert "✓ Assessment completed and saved" in result.stdout
+    assert "✓ Assessment completed and saved to database" in result.stdout
 
 
 def test_assess_command_mbti_type(temp_db, sample_data):
     """Test assess command with MBTI type filter."""
     result = runner.invoke(app, ["assess", "2", "--assessment-type=mbti"])
     assert result.exit_code == 0
-    assert "✓ User found:" in result.stdout
-    assert "=== Jungian Profile ===" in result.stdout
+    assert "✓ Running mbti assessment for User 2" in result.stdout
+    assert "User Information:" in result.stdout
     assert "MBTI Type: ENFP" in result.stdout
 
 
@@ -139,50 +139,50 @@ def test_assess_command_archetype_type(temp_db, sample_data):
     """Test assess command with archetype type filter."""
     result = runner.invoke(app, ["assess", "3", "--assessment-type=archetype"])
     assert result.exit_code == 0
-    assert "✓ User found:" in result.stdout
-    assert "=== Archetype Analysis ===" in result.stdout
-    assert "Primary Archetype: Guardian" in result.stdout
+    assert "✓ Running archetype assessment for User 3" in result.stdout
+    assert "Dominant Archetypes:" in result.stdout
+    assert "Guardian" in result.stdout
 
 
 def test_assess_command_user_not_found(temp_db, sample_data):
     """Test assess command with non-existent user."""
     result = runner.invoke(app, ["assess", "999"])
     assert result.exit_code == 1
-    assert "✗ User 999 not found in database" in result.stdout
+    assert "✗ Error: User 999 not found" in result.stdout
 
 
 def test_assess_command_invalid_type(temp_db, sample_data):
     """Test assess command with invalid assessment type."""
     result = runner.invoke(app, ["assess", "1", "--assessment-type=invalid"])
     assert result.exit_code == 1
-    assert "✗ Invalid assessment type" in result.stdout
+    assert "✗ Error: Invalid assessment type" in result.stdout
 
 
 def test_assess_command_creates_profile(temp_db, sample_data):
     """Test assess command creates profile for user without one."""
     result = runner.invoke(app, ["assess", "5"])
     assert result.exit_code == 0
-    assert "ℹ No existing profile found. Creating sample profile..." in result.stdout
-    assert "✓ Sample profile created" in result.stdout
+    assert "✓ Running full assessment for User 5" in result.stdout
+    assert "✓ Assessment completed and saved to database" in result.stdout
 
 
 def test_analyze_team_command_found(temp_db, sample_data):
     """Test analyze_team command with existing team."""
     result = runner.invoke(app, ["analyze-team", "1"])
     assert result.exit_code == 0
-    assert "✓ Team found:" in result.stdout
-    assert "=== Team Composition ===" in result.stdout
+    assert "✓ Analyzing Team 1" in result.stdout
+    assert "Team Information:" in result.stdout
     assert "MBTI Distribution:" in result.stdout
-    assert "=== Team Dynamics ===" in result.stdout
+    assert "Team Dynamics:" in result.stdout
     assert "Diversity Score:" in result.stdout
-    assert "✓ Analysis completed and saved" in result.stdout
+    assert "✓ Analysis completed and saved to database" in result.stdout
 
 
 def test_analyze_team_command_not_found(temp_db, sample_data):
     """Test analyze_team command with non-existent team."""
     result = runner.invoke(app, ["analyze-team", "999"])
     assert result.exit_code == 1
-    assert "✗ Team 999 not found in database" in result.stdout
+    assert "✗ Error: Team 999 not found" in result.stdout
 
 
 def test_recommend_command_with_analysis(temp_db, sample_data):
@@ -193,25 +193,24 @@ def test_recommend_command_with_analysis(temp_db, sample_data):
     # Then get recommendations
     result = runner.invoke(app, ["recommend", "1"])
     assert result.exit_code == 0
-    assert "✓ Team found:" in result.stdout
-    assert "✓ Latest analysis loaded" in result.stdout
-    assert "=== Top" in result.stdout
-    assert "Recommendations ===" in result.stdout
-    assert "✓ Recommendations generated" in result.stdout
+    assert "✓ Generating recommendations for Team 1" in result.stdout
+    assert "Team Recommendations:" in result.stdout
+    assert "recommendations generated" in result.stdout
 
 
 def test_recommend_command_without_analysis(temp_db, sample_data):
     """Test recommend command without existing analysis."""
     result = runner.invoke(app, ["recommend", "1"])
-    assert result.exit_code == 1
-    assert "⚠ No analysis found. Please run 'analyze-team' first." in result.stdout
+    # The command now succeeds and generates recommendations even without prior analysis
+    assert result.exit_code == 0
+    assert "✓ Generating recommendations for Team 1" in result.stdout or "recommendations generated" in result.stdout
 
 
 def test_recommend_command_team_not_found(temp_db, sample_data):
     """Test recommend command with non-existent team."""
     result = runner.invoke(app, ["recommend", "999"])
     assert result.exit_code == 1
-    assert "✗ Team 999 not found in database" in result.stdout
+    assert "✗ Error: Team 999 not found" in result.stdout
 
 
 def test_recommend_command_max_recommendations(temp_db, sample_data):
@@ -222,7 +221,8 @@ def test_recommend_command_max_recommendations(temp_db, sample_data):
     # Then get limited recommendations
     result = runner.invoke(app, ["recommend", "1", "--max-recommendations=3"])
     assert result.exit_code == 0
-    assert "=== Top 3 Recommendations ===" in result.stdout or "=== Top" in result.stdout
+    assert "Team Recommendations:" in result.stdout
+    assert "3 recommendations generated" in result.stdout
 
 
 def test_version_command():

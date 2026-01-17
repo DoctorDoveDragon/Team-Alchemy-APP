@@ -68,6 +68,7 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v --cov=src/team_alchemy --cov-report=term-missing"
+importmode = "importlib"
 
 [tool.black]
 line-length = 100

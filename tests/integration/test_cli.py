@@ -18,11 +18,9 @@ runner = CliRunner()
 @pytest.fixture
 def temp_db():
     """Create a temporary database for testing."""
-    with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
-        tmp_db_path = tmp.name
-    
-    # Set DATABASE_URL to use temp file
-    os.environ["DATABASE_URL"] = f"sqlite:///{tmp_db_path}"
+    # Set DATABASE_URL to use in-memory database
+    original_db_url = os.environ.get("DATABASE_URL")
+    os.environ["DATABASE_URL"] = "sqlite:///:memory:"
     
     # Re-import to pick up new DATABASE_URL
     import importlib
@@ -34,9 +32,11 @@ def temp_db():
     
     yield repo_module
     
-    # Cleanup
-    if Path(tmp_db_path).exists():
-        Path(tmp_db_path).unlink()
+    # Cleanup - restore original DATABASE_URL
+    if original_db_url:
+        os.environ["DATABASE_URL"] = original_db_url
+    elif "DATABASE_URL" in os.environ:
+        del os.environ["DATABASE_URL"]
 
 
 @pytest.fixture

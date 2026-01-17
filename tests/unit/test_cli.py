@@ -78,7 +78,7 @@ def temp_db():
 
     db.close()
 
-    yield (None, test_user_id, test_team_id)  # Changed first element from tmp_db_path to None
+    yield (test_user_id, test_team_id)
 
     # Cleanup
     if original_db_url:
@@ -101,7 +101,7 @@ def test_cli_version():
 
 def test_cli_assess_user_found(temp_db):
     """Test assess command with existing user."""
-    tmp_db_path, test_user_id, test_team_id = temp_db
+    test_user_id, test_team_id = temp_db
     runner = CliRunner()
     result = runner.invoke(app, ["assess", str(test_user_id)])
 
@@ -123,7 +123,7 @@ def test_cli_assess_user_not_found(temp_db):
 
 def test_cli_assess_user_without_profile(temp_db):
     """Test assess command with user that has no profile."""
-    tmp_db_path, test_user_id, test_team_id = temp_db
+    test_user_id, test_team_id = temp_db
     # User 3 has no profile, but we need to find its actual ID
     # Since it's the 3rd user created, let's use test_user_id + 2
     user_without_profile_id = test_user_id + 2
@@ -138,7 +138,7 @@ def test_cli_assess_user_without_profile(temp_db):
 
 def test_cli_analyze_team_found(temp_db):
     """Test analyze_team command with existing team."""
-    tmp_db_path, test_user_id, test_team_id = temp_db
+    test_user_id, test_team_id = temp_db
     runner = CliRunner()
     result = runner.invoke(app, ["analyze-team", str(test_team_id)])
 
@@ -160,7 +160,7 @@ def test_cli_analyze_team_not_found(temp_db):
 
 def test_cli_recommend_team_found(temp_db):
     """Test recommend command with existing team."""
-    tmp_db_path, test_user_id, test_team_id = temp_db
+    test_user_id, test_team_id = temp_db
     runner = CliRunner()
     result = runner.invoke(app, ["recommend", str(test_team_id)])
 
@@ -172,7 +172,7 @@ def test_cli_recommend_team_found(temp_db):
 
 def test_cli_recommend_with_max_limit(temp_db):
     """Test recommend command with max recommendations limit."""
-    tmp_db_path, test_user_id, test_team_id = temp_db
+    test_user_id, test_team_id = temp_db
     runner = CliRunner()
     result = runner.invoke(app, ["recommend", str(test_team_id), "--max-recommendations", "3"])
 
@@ -213,7 +213,7 @@ def test_cli_init_db():
 
 def test_cli_assess_mbti_only(temp_db):
     """Test assess command with --assessment-type mbti."""
-    tmp_db_path, test_user_id, test_team_id = temp_db
+    test_user_id, test_team_id = temp_db
     runner = CliRunner()
     result = runner.invoke(app, ["assess", str(test_user_id), "--assessment-type", "mbti"])
 
@@ -227,7 +227,7 @@ def test_cli_assess_mbti_only(temp_db):
 
 def test_cli_assess_archetype_only(temp_db):
     """Test assess command with --assessment-type archetype."""
-    tmp_db_path, test_user_id, test_team_id = temp_db
+    test_user_id, test_team_id = temp_db
     runner = CliRunner()
     result = runner.invoke(app, ["assess", str(test_user_id), "--assessment-type", "archetype"])
 
@@ -242,7 +242,7 @@ def test_cli_assess_archetype_only(temp_db):
 
 def test_cli_assess_defense_only(temp_db):
     """Test assess command with --assessment-type defense."""
-    tmp_db_path, test_user_id, test_team_id = temp_db
+    test_user_id, test_team_id = temp_db
     runner = CliRunner()
     result = runner.invoke(app, ["assess", str(test_user_id), "--assessment-type", "defense"])
 
@@ -259,7 +259,7 @@ def test_cli_assess_defense_only(temp_db):
 
 def test_cli_assess_full_type(temp_db):
     """Test assess command with --assessment-type full (explicit)."""
-    tmp_db_path, test_user_id, test_team_id = temp_db
+    test_user_id, test_team_id = temp_db
     runner = CliRunner()
     result = runner.invoke(app, ["assess", str(test_user_id), "--assessment-type", "full"])
 
@@ -273,7 +273,7 @@ def test_cli_assess_full_type(temp_db):
 
 def test_cli_assess_invalid_type(temp_db):
     """Test assess command with invalid assessment type."""
-    tmp_db_path, test_user_id, test_team_id = temp_db
+    test_user_id, test_team_id = temp_db
     runner = CliRunner()
     result = runner.invoke(app, ["assess", str(test_user_id), "--assessment-type", "invalid"])
 
@@ -284,7 +284,7 @@ def test_cli_assess_invalid_type(temp_db):
 
 def test_cli_assess_default_warning(temp_db):
     """Test that warning is shown when using default MBTI type."""
-    tmp_db_path, test_user_id, test_team_id = temp_db
+    test_user_id, test_team_id = temp_db
     # User 3 has no profile, so it should use default and show warning
     user_without_profile_id = test_user_id + 2
 

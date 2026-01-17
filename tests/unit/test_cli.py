@@ -134,6 +134,75 @@ def test_cli_assess_user_without_profile(temp_db):
     
     assert result.exit_code == 0
     assert "Test User 3" in result.stdout
+    assert "Warning: User has no MBTI assessment on file" in result.stdout
+    assert "Assessment completed" in result.stdout
+
+
+def test_cli_assess_mbti_only(temp_db):
+    """Test assess command with MBTI assessment type."""
+    tmp_db_path, test_user_id, test_team_id = temp_db
+    runner = CliRunner()
+    result = runner.invoke(app, ["assess", str(test_user_id), "--assessment-type", "mbti"])
+    
+    assert result.exit_code == 0
+    assert "Test User 1" in result.stdout
+    assert "INTJ" in result.stdout
+    assert "Jungian Profile" in result.stdout
+    assert "Function Stack" in result.stdout
+    # Should not show defense mechanisms or recommendations for mbti-only
+    assert "Defense Mechanisms" not in result.stdout
+    assert "Recommendations" not in result.stdout
+    assert "Assessment completed" in result.stdout
+
+
+def test_cli_assess_archetype_only(temp_db):
+    """Test assess command with archetype assessment type."""
+    tmp_db_path, test_user_id, test_team_id = temp_db
+    runner = CliRunner()
+    result = runner.invoke(app, ["assess", str(test_user_id), "--assessment-type", "archetype"])
+    
+    assert result.exit_code == 0
+    assert "Test User 1" in result.stdout
+    assert "Dominant Archetypes" in result.stdout
+    # Should not show function stack, defense mechanisms, or recommendations for archetype-only
+    assert "Function Stack" not in result.stdout
+    assert "Defense Mechanisms" not in result.stdout
+    assert "Recommendations" not in result.stdout
+    assert "Assessment completed" in result.stdout
+
+
+def test_cli_assess_jungian_only(temp_db):
+    """Test assess command with jungian assessment type."""
+    tmp_db_path, test_user_id, test_team_id = temp_db
+    runner = CliRunner()
+    result = runner.invoke(app, ["assess", str(test_user_id), "--assessment-type", "jungian"])
+    
+    assert result.exit_code == 0
+    assert "Test User 1" in result.stdout
+    assert "INTJ" in result.stdout
+    assert "Jungian Profile" in result.stdout
+    assert "Function Stack" in result.stdout
+    # Should not show archetypes, defense mechanisms, or recommendations for jungian-only
+    assert "Dominant Archetypes" not in result.stdout
+    assert "Defense Mechanisms" not in result.stdout
+    assert "Recommendations" not in result.stdout
+    assert "Assessment completed" in result.stdout
+
+
+def test_cli_assess_full_assessment(temp_db):
+    """Test assess command with full assessment type (default)."""
+    tmp_db_path, test_user_id, test_team_id = temp_db
+    runner = CliRunner()
+    result = runner.invoke(app, ["assess", str(test_user_id), "--assessment-type", "full"])
+    
+    assert result.exit_code == 0
+    assert "Test User 1" in result.stdout
+    assert "INTJ" in result.stdout
+    assert "Jungian Profile" in result.stdout
+    assert "Function Stack" in result.stdout
+    assert "Dominant Archetypes" in result.stdout
+    assert "Defense Mechanisms" in result.stdout
+    assert "Recommendations" in result.stdout
     assert "Assessment completed" in result.stdout
 
 

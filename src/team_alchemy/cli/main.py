@@ -3,7 +3,7 @@ Command-line interface for Team Alchemy.
 """
 
 import typer
-from typing import Optional
+from typing import Optional, Any
 import json
 import logging
 from enum import Enum
@@ -44,7 +44,7 @@ class AssessmentType(str, Enum):
 
 
 # Helper functions
-def get_user_mbti_type(profile: Optional[object]) -> tuple[str, bool]:
+def get_user_mbti_type(profile: Optional[Any]) -> tuple[str, bool]:
     """
     Extract MBTI type from profile with fallback.
     
@@ -64,16 +64,28 @@ def get_user_mbti_type(profile: Optional[object]) -> tuple[str, bool]:
     return DEFAULT_MBTI_TYPE, True
 
 
-def display_user_info(user):
-    """Display user information section."""
+def display_user_info(user: Any) -> None:
+    """
+    Display user information section.
+    
+    Args:
+        user: User object with id, name, and email attributes
+    """
     typer.echo("User Information:")
     typer.echo(f"  ID: {user.id}")
     typer.echo(f"  Name: {user.name}")
     typer.echo(f"  Email: {user.email}\n")
 
 
-def display_jungian_profile(mbti_type: str, jungian_profile, mapping: dict):
-    """Display Jungian profile section."""
+def display_jungian_profile(mbti_type: str, jungian_profile: Optional[Any], mapping: dict) -> None:
+    """
+    Display Jungian profile section.
+    
+    Args:
+        mbti_type: MBTI type string (e.g., "INTJ")
+        jungian_profile: JungianProfile object or None
+        mapping: Dictionary containing type mappings
+    """
     typer.echo("Jungian Profile:")
     typer.echo(f"  MBTI Type: {mbti_type}")
     typer.echo("  Function Stack:")
@@ -87,8 +99,14 @@ def display_jungian_profile(mbti_type: str, jungian_profile, mapping: dict):
     typer.echo()
 
 
-def display_archetypes(archetype_patterns, mapping: dict):
-    """Display dominant archetypes section."""
+def display_archetypes(archetype_patterns: list, mapping: dict) -> None:
+    """
+    Display dominant archetypes section.
+    
+    Args:
+        archetype_patterns: List of ArchetypePattern objects
+        mapping: Dictionary containing archetype affinity mappings
+    """
     typer.echo("Dominant Archetypes:")
     
     if archetype_patterns:
@@ -104,8 +122,13 @@ def display_archetypes(archetype_patterns, mapping: dict):
     typer.echo()
 
 
-def display_defense_mechanisms(defense_profiles):
-    """Display defense mechanisms section."""
+def display_defense_mechanisms(defense_profiles: list) -> None:
+    """
+    Display defense mechanisms section.
+    
+    Args:
+        defense_profiles: List of DefenseProfile objects
+    """
     typer.echo("Defense Mechanisms:")
     
     if defense_profiles:
@@ -119,8 +142,14 @@ def display_defense_mechanisms(defense_profiles):
     typer.echo()
 
 
-def display_recommendations(mbti_type: str, mapping: dict):
-    """Display personalized recommendations section."""
+def display_recommendations(mbti_type: str, mapping: dict) -> None:
+    """
+    Display personalized recommendations section.
+    
+    Args:
+        mbti_type: MBTI type string (e.g., "INTJ")
+        mapping: Dictionary containing recommendations and shadow information
+    """
     typer.echo("Recommendations:")
     
     # MBTI-based recommendations
@@ -488,12 +517,8 @@ def recommend(
             recommendations = []
             rec_count = 0
             
-            # Helper to check if we should continue
-            def should_continue():
-                return rec_count < max_recommendations
-            
             # Diversity-based recommendations
-            if should_continue():
+            if rec_count < max_recommendations:
                 if diversity_score > 0.8:
                     rec_count += 1
                     rec = (
@@ -514,7 +539,7 @@ def recommend(
                     typer.echo(rec + "\n")
             
             # Check for thinking vs feeling balance
-            if should_continue():
+            if rec_count < max_recommendations:
                 thinking_count = sum(1 for m in member_data if m['mbti_type'][2] == 'T')
                 feeling_count = len(member_data) - thinking_count
                 
@@ -538,7 +563,7 @@ def recommend(
                     typer.echo(rec + "\n")
             
             # Check for intuition vs sensing balance
-            if should_continue():
+            if rec_count < max_recommendations:
                 intuitive_count = sum(1 for m in member_data if m['mbti_type'][1] == 'N')
                 sensing_count = len(member_data) - intuitive_count
                 
@@ -562,7 +587,7 @@ def recommend(
                     typer.echo(rec + "\n")
             
             # Specific type-based recommendations
-            if should_continue():
+            if rec_count < max_recommendations:
                 type_counts = sorted(mbti_distribution.items(), key=lambda x: x[1], reverse=True)
                 
                 if type_counts[0][1] > 1:
@@ -577,7 +602,7 @@ def recommend(
                     typer.echo(rec + "\n")
             
             # General teamwork recommendation
-            if should_continue():
+            if rec_count < max_recommendations:
                 rec_count += 1
                 rec = (
                     f"{rec_count}. Foster Psychological Safety\n"

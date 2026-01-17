@@ -23,10 +23,20 @@ def temp_db():
 
     # Import repository module after setting environment variable
     from team_alchemy.data import repository
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
 
     # Dispose of existing engine if it exists to pick up new DATABASE_URL
     if hasattr(repository, 'engine') and repository.engine is not None:
         repository.engine.dispose()
+
+    # Recreate engine and session factory with new DATABASE_URL
+    new_db_url = os.environ["DATABASE_URL"]
+    repository.engine = create_engine(
+        new_db_url,
+        connect_args={"check_same_thread": False} if "sqlite" in new_db_url else {}
+    )
+    repository.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=repository.engine)
 
     # Initialize database
     repository.init_db()
@@ -89,7 +99,8 @@ def temp_db():
         del os.environ["DATABASE_URL"]
     
     # Dispose of the engine to clean up the in-memory database
-    repository.engine.dispose()
+    if hasattr(repository, 'engine') and repository.engine is not None:
+        repository.engine.dispose()
 
 
 def test_cli_version():

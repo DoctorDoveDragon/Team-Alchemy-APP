@@ -37,7 +37,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto px-4 py-8">
         <header className="text-center mb-12">
           <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4">
@@ -49,13 +49,13 @@ function App() {
           {healthStatus && (
             <div className={`mt-4 inline-flex items-center px-4 py-2 rounded-full ${
               healthStatus.status === 'unhealthy' 
-                ? 'bg-red-100 dark:bg-red-900' 
-                : 'bg-green-100 dark:bg-green-900'
+                ? 'bg-crimson-100 dark:bg-crimson-900' 
+                : 'bg-emerald-100 dark:bg-emerald-900'
             }`}>
               <span className={
                 healthStatus.status === 'unhealthy'
-                  ? 'text-red-800 dark:text-red-200'
-                  : 'text-green-800 dark:text-green-200'
+                  ? 'text-crimson-800 dark:text-crimson-200'
+                  : 'text-emerald-800 dark:text-emerald-200'
               }>
                 {healthStatus.status === 'unhealthy' ? '✗' : '✓'} Backend: {healthStatus.status}
                 {healthStatus.error && ` (${healthStatus.error})`}
@@ -71,7 +71,7 @@ function App() {
               onClick={() => setActiveTab('psychology')}
               className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === 'psychology'
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-mustard-600 text-white'
                   : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
             >
@@ -81,7 +81,7 @@ function App() {
               onClick={() => setActiveTab('cases')}
               className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === 'cases'
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-mustard-600 text-white'
                   : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
             >
@@ -91,7 +91,7 @@ function App() {
               onClick={() => setActiveTab('academic')}
               className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === 'academic'
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-mustard-600 text-white'
                   : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
             >

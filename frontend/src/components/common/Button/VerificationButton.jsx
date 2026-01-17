@@ -20,12 +20,12 @@ const VerificationButton = ({ onVerify, isVerified }) => {
         relative inline-flex items-center px-6 py-3 rounded-lg font-medium text-white
         transition-all duration-200 transform
         ${isVerified 
-          ? 'bg-green-500 hover:bg-green-600 cursor-default' 
-          : 'bg-primary-600 hover:bg-primary-700 hover:scale-105 active:scale-95'
+          ? 'bg-emerald-500 hover:bg-emerald-600 cursor-default' 
+          : 'bg-mustard-600 hover:bg-mustard-700 hover:scale-105 active:scale-95'
         }
         ${isLoading ? 'opacity-75 cursor-wait' : ''}
         disabled:opacity-50 disabled:cursor-not-allowed
-        focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500
+        focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-mustard-500
       `}
     >
       {isLoading && (

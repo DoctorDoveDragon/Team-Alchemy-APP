@@ -43,11 +43,11 @@ function TeamAnalysisDashboard() {
           </p>
         </div>
 
-        <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900 dark:to-green-800 p-6 rounded-lg">
-          <h3 className="font-semibold text-green-900 dark:text-green-100 mb-2">
+        <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900 dark:to-emerald-800 p-6 rounded-lg">
+          <h3 className="font-semibold text-emerald-900 dark:text-emerald-100 mb-2">
             Defense Mechanisms
           </h3>
-          <p className="text-sm text-green-700 dark:text-green-200">
+          <p className="text-sm text-emerald-700 dark:text-emerald-200">
             Freudian analysis of defense mechanisms with adaptiveness scoring
           </p>
         </div>

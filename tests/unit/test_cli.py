@@ -4,6 +4,7 @@ Unit tests for CLI commands.
 
 import os
 import tempfile
+import time
 from pathlib import Path
 
 import pytest
@@ -35,8 +36,6 @@ def temp_db():
     db = SessionLocal()
 
     # Use unique timestamp-based emails to avoid conflicts
-    import time
-
     ts = str(time.time()).replace(".", "")
 
     # Add test data

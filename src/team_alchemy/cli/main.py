@@ -12,6 +12,7 @@ import typer
 # Constants
 DEFAULT_MBTI_TYPE = "INTJ"
 DEFAULT_ARCHETYPE = "Analyst"
+VALID_ASSESSMENT_TYPES = ["full", "mbti", "archetype", "defense"]
 
 JUNGIAN_FUNCTION_NAMES = {
     "Ti": "Introverted Thinking",
@@ -48,7 +49,7 @@ def get_db_session():
         db.close()
 
 
-def get_user_mbti_type(profile):
+def get_user_mbti_type(profile) -> tuple[str, bool]:
     """
     Extract MBTI type from profile.
 
@@ -56,7 +57,8 @@ def get_user_mbti_type(profile):
         profile: UserProfile object or None
 
     Returns:
-        tuple: (mbti_type, is_default)
+        tuple[str, bool]: (mbti_type, is_default) where is_default indicates
+            whether the default MBTI type was used
     """
     if profile and profile.jungian_type:
         return profile.jungian_type, False
@@ -66,8 +68,14 @@ def get_user_mbti_type(profile):
     return DEFAULT_MBTI_TYPE, True
 
 
-def display_jungian_profile(mbti_type: str, jungian_profile, mapping: dict):
-    """Display formatted Jungian profile information."""
+def display_jungian_profile(mbti_type: str, jungian_profile, mapping: dict) -> None:
+    """Display formatted Jungian profile information.
+
+    Args:
+        mbti_type: The MBTI type string
+        jungian_profile: JungianProfile object or None
+        mapping: Dictionary of type mappings
+    """
     typer.echo("Jungian Profile:")
     typer.echo(f"  MBTI Type: {mbti_type}")
     typer.echo("  Function Stack:")
@@ -81,8 +89,13 @@ def display_jungian_profile(mbti_type: str, jungian_profile, mapping: dict):
     typer.echo()
 
 
-def display_archetypes(archetype_patterns, mapping: dict):
-    """Display dominant archetypes."""
+def display_archetypes(archetype_patterns, mapping: dict) -> None:
+    """Display dominant archetypes.
+
+    Args:
+        archetype_patterns: List of ArchetypePattern objects
+        mapping: Dictionary of type mappings
+    """
     typer.echo("Dominant Archetypes:")
     if archetype_patterns:
         for pattern in archetype_patterns[:3]:
@@ -98,8 +111,13 @@ def display_archetypes(archetype_patterns, mapping: dict):
     typer.echo()
 
 
-def display_defense_mechanisms(defense_profiles, mbti_type: str):
-    """Display defense mechanisms."""
+def display_defense_mechanisms(defense_profiles, mbti_type: str) -> None:
+    """Display defense mechanisms.
+
+    Args:
+        defense_profiles: List of DefenseProfile objects
+        mbti_type: The MBTI type string
+    """
     typer.echo("Defense Mechanisms:")
     if defense_profiles:
         for defense in defense_profiles[:3]:
@@ -114,8 +132,13 @@ def display_defense_mechanisms(defense_profiles, mbti_type: str):
     typer.echo()
 
 
-def display_recommendations(mbti_type: str, mapping: dict):
-    """Display personalized recommendations."""
+def display_recommendations(mbti_type: str, mapping: dict) -> None:
+    """Display personalized recommendations.
+
+    Args:
+        mbti_type: The MBTI type string
+        mapping: Dictionary of type mappings
+    """
     typer.echo("Recommendations:")
 
     # MBTI-based recommendations
@@ -173,10 +196,10 @@ def assess(
     logger.info(f"Running {assessment_type} assessment for user {user_id}")
 
     # Validate assessment type
-    valid_types = ["full", "mbti", "archetype", "defense"]
-    if assessment_type not in valid_types:
+    if assessment_type not in VALID_ASSESSMENT_TYPES:
         typer.echo(
-            f"✗ Error: Invalid assessment type. Must be one of: {', '.join(valid_types)}", err=True
+            f"✗ Error: Invalid assessment type. Must be one of: {', '.join(VALID_ASSESSMENT_TYPES)}",
+            err=True,
         )
         raise typer.Exit(1)
 

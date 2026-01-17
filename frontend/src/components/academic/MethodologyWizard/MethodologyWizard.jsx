@@ -61,15 +61,15 @@ const MethodologyWizard = () => {
   if (isComplete) {
     return (
       <div className="space-y-6">
-        <div className="bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-lg p-6">
-          <h3 className="text-xl font-semibold text-green-800 dark:text-green-200 mb-4">
+        <div className="bg-emerald-50 dark:bg-emerald-900 border border-emerald-200 dark:border-emerald-700 rounded-lg p-6">
+          <h3 className="text-xl font-semibold text-emerald-800 dark:text-emerald-200 mb-4">
             ✓ Methodology Defined
           </h3>
-          <div className="space-y-2 text-green-700 dark:text-green-300">
+          <div className="space-y-2 text-emerald-700 dark:text-emerald-300">
             {METHODOLOGY_STEPS.map(step => (
               <div key={step.id} className="flex items-center">
                 <span className="font-medium w-40">{step.title}:</span>
-                <span className="text-green-900 dark:text-green-100 font-semibold">
+                <span className="text-emerald-900 dark:text-emerald-100 font-semibold">
                   {selections[step.id]}
                 </span>
               </div>
@@ -100,7 +100,7 @@ const MethodologyWizard = () => {
         </div>
         <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
           <div
-            className="bg-primary-600 h-2 rounded-full transition-all duration-300"
+            className="bg-mustard-600 h-2 rounded-full transition-all duration-300"
             style={{ width: `${((currentStep + 1) / METHODOLOGY_STEPS.length) * 100}%` }}
           />
         </div>
@@ -120,14 +120,14 @@ const MethodologyWizard = () => {
               className={`
                 p-4 rounded-lg border-2 text-left transition-all
                 ${currentSelection === option
-                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                  : 'border-gray-200 dark:border-gray-600 hover:border-primary-300 dark:hover:border-primary-700'
+                  ? 'border-mustard-500 bg-mustard-50 dark:bg-mustard-900/20'
+                  : 'border-gray-200 dark:border-gray-600 hover:border-mustard-300 dark:hover:border-mustard-700'
                 }
               `}
             >
               <span className={`font-medium ${
                 currentSelection === option
-                  ? 'text-primary-700 dark:text-primary-300'
+                  ? 'text-mustard-700 dark:text-mustard-300'
                   : 'text-gray-700 dark:text-gray-300'
               }`}>
                 {option}
@@ -149,7 +149,7 @@ const MethodologyWizard = () => {
         <button
           onClick={handleNext}
           disabled={!canProceed}
-          className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="px-6 py-2 bg-mustard-600 hover:bg-mustard-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {currentStep === METHODOLOGY_STEPS.length - 1 ? 'Complete' : 'Next'}
         </button>

@@ -15,6 +15,11 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Custom theme colors */
+  --color-primary: #D4AF37;
+  --color-secondary: #DC2626;
+  --color-accent: #10B981;
 }
 
 body {

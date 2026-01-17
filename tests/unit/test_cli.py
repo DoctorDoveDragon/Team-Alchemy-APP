@@ -23,11 +23,9 @@ def temp_db():
 
     # Import repository module after setting environment variable
     from team_alchemy.data import repository
-    
-    # Reinitialize engine with new DATABASE_URL (handles URL changes without reload)
-    repository.reinit_engine()
-    
+
     # Initialize database with new URL
+    # init_db() will automatically recreate engine if DATABASE_URL has changed
     repository.init_db()
 
     # Create session for setup

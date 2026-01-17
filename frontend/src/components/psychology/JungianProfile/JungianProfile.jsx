@@ -77,17 +77,17 @@ function JungianProfile({ mbtiType }) {
           Cognitive Function Stack
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="bg-blue-50 dark:bg-blue-900 p-3 rounded-md">
-            <p className="text-sm font-medium text-blue-900 dark:text-blue-100">Dominant</p>
-            <p className="text-lg text-blue-800 dark:text-blue-200">{profile.dominant_function}</p>
+          <div className="bg-mustard-50 dark:bg-mustard-900 p-3 rounded-md">
+            <p className="text-sm font-medium text-mustard-900 dark:text-mustard-100">Dominant</p>
+            <p className="text-lg text-mustard-800 dark:text-mustard-200">{profile.dominant_function}</p>
           </div>
           <div className="bg-emerald-50 dark:bg-emerald-900 p-3 rounded-md">
             <p className="text-sm font-medium text-emerald-900 dark:text-emerald-100">Auxiliary</p>
             <p className="text-lg text-emerald-800 dark:text-emerald-200">{profile.auxiliary_function}</p>
           </div>
-          <div className="bg-yellow-50 dark:bg-yellow-900 p-3 rounded-md">
-            <p className="text-sm font-medium text-yellow-900 dark:text-yellow-100">Tertiary</p>
-            <p className="text-lg text-yellow-800 dark:text-yellow-200">{profile.tertiary_function}</p>
+          <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Tertiary</p>
+            <p className="text-lg text-gray-800 dark:text-gray-200">{profile.tertiary_function}</p>
           </div>
           <div className="bg-crimson-50 dark:bg-crimson-900 p-3 rounded-md">
             <p className="text-sm font-medium text-crimson-900 dark:text-crimson-100">Inferior</p>
@@ -105,7 +105,7 @@ function JungianProfile({ mbtiType }) {
           {profile.archetype_affinity.map((archetype) => (
             <span
               key={archetype}
-              className="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-full text-sm font-medium"
+              className="px-3 py-1 bg-mustard-100 dark:bg-mustard-900 text-mustard-800 dark:text-mustard-200 rounded-full text-sm font-medium"
             >
               {archetype}
             </span>

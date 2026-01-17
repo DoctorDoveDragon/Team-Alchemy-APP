@@ -60,6 +60,10 @@ async def create_team(team: TeamCreate, db: Session = Depends(get_db)):
             detail="Failed to create team due to database constraint"
         )
 
+    # Add to database
+    db.add(db_team)
+    db.commit()
+    db.refresh(db_team)
 
 @router.get("/{team_id}", response_model=TeamResponse)
 async def get_team(team_id: int, db: Session = Depends(get_db)):

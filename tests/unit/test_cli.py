@@ -3,9 +3,7 @@ Unit tests for CLI commands.
 """
 
 import os
-import tempfile
 import time
-from pathlib import Path
 
 import pytest
 from typer.testing import CliRunner
@@ -17,13 +15,9 @@ from team_alchemy.data.models import Base, Team, User, UserProfile
 @pytest.fixture
 def temp_db():
     """Create a temporary database for testing."""
-    # Create temporary database file
-    with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
-        tmp_db_path = tmp.name
-
     # Set up database URL in environment
     original_db_url = os.environ.get("DATABASE_URL")
-    os.environ["DATABASE_URL"] = f"sqlite:///{tmp_db_path}"
+    os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 
     # Import repository module after setting environment variable
     from team_alchemy.data import repository
@@ -80,16 +74,13 @@ def temp_db():
 
     db.close()
 
-    yield (tmp_db_path, test_user_id, test_team_id)
+    yield (None, test_user_id, test_team_id)
 
     # Cleanup
     if original_db_url:
         os.environ["DATABASE_URL"] = original_db_url
     elif "DATABASE_URL" in os.environ:
         del os.environ["DATABASE_URL"]
-
-    if Path(tmp_db_path).exists():
-        Path(tmp_db_path).unlink()
 
 
 def test_cli_version():
@@ -196,21 +187,21 @@ def test_cli_recommend_team_not_found(temp_db):
 
 def test_cli_init_db():
     """Test database initialization command."""
-    with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
-        tmp_db_path = tmp.name
-
+    original_db_url = os.environ.get("DATABASE_URL")
+    
     try:
-        os.environ["DATABASE_URL"] = f"sqlite:///{tmp_db_path}"
+        os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 
         runner = CliRunner()
         result = runner.invoke(app, ["init"])
 
         assert result.exit_code == 0
         assert "initialized successfully" in result.stdout
-        assert Path(tmp_db_path).exists()
     finally:
-        if Path(tmp_db_path).exists():
-            Path(tmp_db_path).unlink()
+        if original_db_url:
+            os.environ["DATABASE_URL"] = original_db_url
+        elif "DATABASE_URL" in os.environ:
+            del os.environ["DATABASE_URL"]
 
 
 def test_cli_assess_mbti_only(temp_db):

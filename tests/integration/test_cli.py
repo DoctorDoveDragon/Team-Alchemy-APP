@@ -3,9 +3,7 @@ Integration tests for CLI commands.
 """
 
 import pytest
-import tempfile
 import os
-from pathlib import Path
 from typer.testing import CliRunner
 from team_alchemy.cli.main import app
 from team_alchemy.data.repository import get_db, init_db
@@ -18,11 +16,9 @@ runner = CliRunner()
 @pytest.fixture
 def temp_db():
     """Create a temporary database for testing."""
-    with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
-        tmp_db_path = tmp.name
-    
-    # Set DATABASE_URL to use temp file
-    os.environ["DATABASE_URL"] = f"sqlite:///{tmp_db_path}"
+    # Set up database URL in environment
+    original_db_url = os.environ.get("DATABASE_URL")
+    os.environ["DATABASE_URL"] = "sqlite:///:memory:"
     
     # Re-import to pick up new DATABASE_URL
     import importlib
@@ -35,8 +31,10 @@ def temp_db():
     yield repo_module
     
     # Cleanup
-    if Path(tmp_db_path).exists():
-        Path(tmp_db_path).unlink()
+    if original_db_url:
+        os.environ["DATABASE_URL"] = original_db_url
+    elif "DATABASE_URL" in os.environ:
+        del os.environ["DATABASE_URL"]
 
 
 @pytest.fixture

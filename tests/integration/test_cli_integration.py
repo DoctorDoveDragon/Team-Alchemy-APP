@@ -22,7 +22,7 @@ def temp_db():
     original_db_url = os.environ.get("DATABASE_URL")
     os.environ["DATABASE_URL"] = "sqlite:///:memory:"
     
-    # Re-import to pick up new DATABASE_URL
+    # Import repository module and reinitialize engine to pick up new DATABASE_URL
     import team_alchemy.data.repository as repo_module
     
     # Reinitialize engine with new DATABASE_URL

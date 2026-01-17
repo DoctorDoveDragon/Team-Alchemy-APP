@@ -40,7 +40,22 @@ def get_db() -> Generator[Session, None, None]:
 
 
 def reinit_engine():
-    """Reinitialize the engine and session factory with current DATABASE_URL."""
+    """
+    Reinitialize the engine and session factory with current DATABASE_URL.
+    
+    This function should be called when the DATABASE_URL environment variable
+    has been changed after the module was first imported. It disposes of the
+    existing engine (closing all connections) and creates a new one with the
+    updated URL.
+    
+    Note: This modifies global module state (engine, SessionLocal, DATABASE_URL).
+    Use with caution in production code - primarily intended for testing.
+    
+    Side effects:
+    - Disposes the existing database engine (closes all active connections)
+    - Recreates the engine with the current DATABASE_URL from environment
+    - Recreates the SessionLocal session factory
+    """
     global engine, SessionLocal, DATABASE_URL
     
     # Get current DATABASE_URL from environment

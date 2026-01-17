@@ -5,6 +5,7 @@ Database session management and repository pattern.
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from typing import Generator
+from contextlib import contextmanager
 import os
 
 from team_alchemy.data.models import Base
@@ -35,6 +36,31 @@ def get_db() -> Generator[Session, None, None]:
     db = SessionLocal()
     try:
         yield db
+    finally:
+        db.close()
+
+
+@contextmanager
+def get_db_session() -> Generator[Session, None, None]:
+    """
+    Context manager for database sessions with automatic commit/rollback.
+    
+    Yields:
+        Database session
+        
+    Example:
+        with get_db_session() as db:
+            user = db.query(User).first()
+            # ... do work ...
+            # Automatically commits on success, rolls back on exception
+    """
+    db = SessionLocal()
+    try:
+        yield db
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()
 

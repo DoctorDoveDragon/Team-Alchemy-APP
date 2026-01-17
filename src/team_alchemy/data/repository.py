@@ -15,6 +15,16 @@ def _get_database_url():
     return os.getenv("DATABASE_URL", "sqlite:///./team_alchemy.db")
 
 
+def get_database_url():
+    """
+    Get the current database URL.
+    
+    Returns:
+        str: The database URL from environment or default.
+    """
+    return _get_database_url()
+
+
 def _create_engine_and_session():
     """Create database engine and session factory."""
     global engine, SessionLocal

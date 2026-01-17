@@ -2,6 +2,7 @@
 FastAPI routes for assessments.
 """
 
+from datetime import datetime
 from fastapi import APIRouter, HTTPException, Depends, status
 from typing import List, Optional
 from sqlalchemy.orm import Session
@@ -38,8 +39,8 @@ async def create_assessment(
             description=assessment.description,
             version=assessment.version,
             status=AssessmentStatus.DRAFT,
-            created_at=None,
-            updated_at=None,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
             responses=[],
             results=None,
         ),

@@ -19,6 +19,10 @@ logger = logging.getLogger(__name__)
 DEFAULT_MBTI_TYPE = "INTJ"
 DEFAULT_ARCHETYPE = "Analyst"
 
+# Empty behaviors list - used when no actual behavioral data is available
+# In future iterations, this will be populated with actual user behavior data
+EMPTY_BEHAVIORS = []
+
 JUNGIAN_FUNCTION_NAMES = {
     "Ti": "Introverted Thinking",
     "Te": "Extraverted Thinking",
@@ -221,14 +225,12 @@ def assess(
             
             if assessment_type in [AssessmentType.FULL, AssessmentType.ARCHETYPE]:
                 # Identify archetypes
-                behaviors = []
-                archetype_patterns = jungian_analyzer.identify_active_archetypes(behaviors, {})
+                archetype_patterns = jungian_analyzer.identify_active_archetypes(EMPTY_BEHAVIORS, {})
                 display_archetypes(archetype_patterns, mapping)
             
             if assessment_type == AssessmentType.FULL:
                 # Identify defense mechanisms
-                behaviors = []
-                defense_profiles = freudian_analyzer.identify_defenses(behaviors, {})
+                defense_profiles = freudian_analyzer.identify_defenses(EMPTY_BEHAVIORS, {})
                 display_defense_mechanisms(defense_profiles)
                 display_recommendations(mbti_type_str, mapping)
             
@@ -486,108 +488,96 @@ def recommend(
             recommendations = []
             rec_count = 0
             
-            # Diversity-based recommendations
-            if diversity_score > 0.8:
-                rec_count += 1
-                rec = (
-                    f"{rec_count}. Leverage Diversity\n"
-                    f"   Your team has excellent MBTI diversity ({diversity_score*100:.1f}%). Ensure all perspectives\n"
-                    f"   are heard in decision-making processes."
-                )
-                recommendations.append(rec)
-                typer.echo(rec + "\n")
-            elif diversity_score < 0.4:
-                rec_count += 1
-                rec = (
-                    f"{rec_count}. Increase Diversity\n"
-                    f"   Your team has low MBTI diversity ({diversity_score*100:.1f}%). Consider adding members\n"
-                    f"   with different personality types for better perspective balance."
-                )
-                recommendations.append(rec)
-                typer.echo(rec + "\n")
+            # Helper to check if we should continue
+            def should_continue():
+                return rec_count < max_recommendations
             
-            if rec_count >= max_recommendations:
-                typer.echo(f"\n✓ {rec_count} recommendations generated\n")
-                logger.info(f"Generated {rec_count} recommendations for team {team_id}")
-                return
+            # Diversity-based recommendations
+            if should_continue():
+                if diversity_score > 0.8:
+                    rec_count += 1
+                    rec = (
+                        f"{rec_count}. Leverage Diversity\n"
+                        f"   Your team has excellent MBTI diversity ({diversity_score*100:.1f}%). Ensure all perspectives\n"
+                        f"   are heard in decision-making processes."
+                    )
+                    recommendations.append(rec)
+                    typer.echo(rec + "\n")
+                elif diversity_score < 0.4:
+                    rec_count += 1
+                    rec = (
+                        f"{rec_count}. Increase Diversity\n"
+                        f"   Your team has low MBTI diversity ({diversity_score*100:.1f}%). Consider adding members\n"
+                        f"   with different personality types for better perspective balance."
+                    )
+                    recommendations.append(rec)
+                    typer.echo(rec + "\n")
             
             # Check for thinking vs feeling balance
-            thinking_count = sum(1 for m in member_data if m['mbti_type'][2] == 'T')
-            feeling_count = len(member_data) - thinking_count
-            
-            if abs(thinking_count - feeling_count) <= 1 and rec_count < max_recommendations:
-                rec_count += 1
-                rec = (
-                    f"{rec_count}. Balance Logic and Empathy\n"
-                    f"   Your team has a good balance of Thinkers ({thinking_count}) and Feelers ({feeling_count}).\n"
-                    f"   Leverage both analytical and empathetic perspectives in problem-solving."
-                )
-                recommendations.append(rec)
-                typer.echo(rec + "\n")
-            elif thinking_count > feeling_count + 2 and rec_count < max_recommendations:
-                rec_count += 1
-                rec = (
-                    f"{rec_count}. Consider Emotional Perspectives\n"
-                    f"   Your team is heavily weighted toward Thinking types ({thinking_count} vs {feeling_count}).\n"
-                    f"   Make deliberate effort to consider emotional and interpersonal impacts."
-                )
-                recommendations.append(rec)
-                typer.echo(rec + "\n")
-            
-            if rec_count >= max_recommendations:
-                typer.echo(f"\n✓ {rec_count} recommendations generated\n")
-                logger.info(f"Generated {rec_count} recommendations for team {team_id}")
-                return
+            if should_continue():
+                thinking_count = sum(1 for m in member_data if m['mbti_type'][2] == 'T')
+                feeling_count = len(member_data) - thinking_count
+                
+                if abs(thinking_count - feeling_count) <= 1:
+                    rec_count += 1
+                    rec = (
+                        f"{rec_count}. Balance Logic and Empathy\n"
+                        f"   Your team has a good balance of Thinkers ({thinking_count}) and Feelers ({feeling_count}).\n"
+                        f"   Leverage both analytical and empathetic perspectives in problem-solving."
+                    )
+                    recommendations.append(rec)
+                    typer.echo(rec + "\n")
+                elif thinking_count > feeling_count + 2:
+                    rec_count += 1
+                    rec = (
+                        f"{rec_count}. Consider Emotional Perspectives\n"
+                        f"   Your team is heavily weighted toward Thinking types ({thinking_count} vs {feeling_count}).\n"
+                        f"   Make deliberate effort to consider emotional and interpersonal impacts."
+                    )
+                    recommendations.append(rec)
+                    typer.echo(rec + "\n")
             
             # Check for intuition vs sensing balance
-            intuitive_count = sum(1 for m in member_data if m['mbti_type'][1] == 'N')
-            sensing_count = len(member_data) - intuitive_count
-            
-            if intuitive_count > sensing_count + 2 and rec_count < max_recommendations:
-                rec_count += 1
-                rec = (
-                    f"{rec_count}. Ground Ideas in Reality\n"
-                    f"   Your team has more Intuitive types ({intuitive_count} vs {sensing_count}).\n"
-                    f"   Ensure innovative ideas are balanced with practical implementation considerations."
-                )
-                recommendations.append(rec)
-                typer.echo(rec + "\n")
-            elif sensing_count > intuitive_count + 2 and rec_count < max_recommendations:
-                rec_count += 1
-                rec = (
-                    f"{rec_count}. Encourage Innovation\n"
-                    f"   Your team has more Sensing types ({sensing_count} vs {intuitive_count}).\n"
-                    f"   Create space for brainstorming and exploring future possibilities."
-                )
-                recommendations.append(rec)
-                typer.echo(rec + "\n")
-            
-            if rec_count >= max_recommendations:
-                typer.echo(f"\n✓ {rec_count} recommendations generated\n")
-                logger.info(f"Generated {rec_count} recommendations for team {team_id}")
-                return
+            if should_continue():
+                intuitive_count = sum(1 for m in member_data if m['mbti_type'][1] == 'N')
+                sensing_count = len(member_data) - intuitive_count
+                
+                if intuitive_count > sensing_count + 2:
+                    rec_count += 1
+                    rec = (
+                        f"{rec_count}. Ground Ideas in Reality\n"
+                        f"   Your team has more Intuitive types ({intuitive_count} vs {sensing_count}).\n"
+                        f"   Ensure innovative ideas are balanced with practical implementation considerations."
+                    )
+                    recommendations.append(rec)
+                    typer.echo(rec + "\n")
+                elif sensing_count > intuitive_count + 2:
+                    rec_count += 1
+                    rec = (
+                        f"{rec_count}. Encourage Innovation\n"
+                        f"   Your team has more Sensing types ({sensing_count} vs {intuitive_count}).\n"
+                        f"   Create space for brainstorming and exploring future possibilities."
+                    )
+                    recommendations.append(rec)
+                    typer.echo(rec + "\n")
             
             # Specific type-based recommendations
-            type_counts = sorted(mbti_distribution.items(), key=lambda x: x[1], reverse=True)
-            
-            if type_counts[0][1] > 1 and rec_count < max_recommendations:
-                dominant_type = type_counts[0][0]
-                rec_count += 1
-                rec = (
-                    f"{rec_count}. Manage Type Clustering\n"
-                    f"   You have multiple {dominant_type} types on the team. Ensure they don't dominate\n"
-                    f"   discussions and actively seek input from other personality types."
-                )
-                recommendations.append(rec)
-                typer.echo(rec + "\n")
-            
-            if rec_count >= max_recommendations:
-                typer.echo(f"\n✓ {rec_count} recommendations generated\n")
-                logger.info(f"Generated {rec_count} recommendations for team {team_id}")
-                return
+            if should_continue():
+                type_counts = sorted(mbti_distribution.items(), key=lambda x: x[1], reverse=True)
+                
+                if type_counts[0][1] > 1:
+                    dominant_type = type_counts[0][0]
+                    rec_count += 1
+                    rec = (
+                        f"{rec_count}. Manage Type Clustering\n"
+                        f"   You have multiple {dominant_type} types on the team. Ensure they don't dominate\n"
+                        f"   discussions and actively seek input from other personality types."
+                    )
+                    recommendations.append(rec)
+                    typer.echo(rec + "\n")
             
             # General teamwork recommendation
-            if rec_count < max_recommendations:
+            if should_continue():
                 rec_count += 1
                 rec = (
                     f"{rec_count}. Foster Psychological Safety\n"

@@ -22,18 +22,18 @@ def temp_db():
     original_db_url = os.environ.get("DATABASE_URL")
     os.environ["DATABASE_URL"] = "sqlite:///:memory:"
     
-    # Import repository module and recreate engine with new DATABASE_URL
+    # Import repository and handle DATABASE_URL change
     import team_alchemy.data.repository as repo_module
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
-    
-    # Dispose of existing engine if it exists
-    if hasattr(repo_module, 'engine') and repo_module.engine is not None:
+
+    # Dispose existing engine if it exists to handle DATABASE_URL change
+    if hasattr(repo_module, 'engine') and repo_module.engine:
         repo_module.engine.dispose()
     
-    # Recreate engine and session factory with new DATABASE_URL from environment
+    # Recreate engine with new DATABASE_URL
     repo_module.engine = create_engine(
-        os.environ["DATABASE_URL"],
+        "sqlite:///:memory:",
         connect_args={"check_same_thread": False}
     )
     repo_module.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=repo_module.engine)

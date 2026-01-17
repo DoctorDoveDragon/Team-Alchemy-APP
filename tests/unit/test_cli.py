@@ -23,10 +23,9 @@ def temp_db():
 
     # Import repository module after setting environment variable
     from team_alchemy.data import repository
-    # Dispose existing engine connections to clean up any cached state
-    repository.engine.dispose()
 
-    # Initialize database
+    # Initialize database with new URL
+    # init_db() will automatically recreate engine if DATABASE_URL has changed
     repository.init_db()
 
     # Create session for setup
@@ -87,7 +86,8 @@ def temp_db():
         del os.environ["DATABASE_URL"]
     
     # Dispose of the engine to clean up the in-memory database
-    repository.engine.dispose()
+    if hasattr(repository, 'engine') and repository.engine is not None:
+        repository.engine.dispose()
 
 
 def test_cli_version():

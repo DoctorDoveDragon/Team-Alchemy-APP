@@ -1,44 +1,65 @@
-# API: Implement Team Management Endpoints
-
 ## Unimplemented Endpoints
-The following endpoints in `src/team_alchemy/api/routes/teams.py` must be implemented:
+The following endpoints in `src/team_alchemy/api/routes/assessment.py` are not implemented and return HTTP 501:
 
-- `POST /teams/`: Create a new team
-- `GET /teams/{team_id}`: Get team by ID
-- `POST /teams/{team_id}/members/{user_id}`: Add member to team
-- `GET /teams/`: List all teams
+- `POST /assessments/`: Create a new assessment
+- `GET /assessments/{assessment_id}`: Get assessment by ID
+- `POST /assessments/{assessment_id}/responses`: Submit response to an assessment
+- `POST /assessments/{assessment_id}/calculate`: Calculate assessment results
+- `GET /assessments/`: List all assessments (returns empty list)
 
 ### Relevant Code Snippets
 
 ```python
-# src/team_alchemy/api/routes/teams.py
-@router.post("/")
-async def create_team(name: str, db: Session = Depends(get_db)):
-    """Create a new team."""
+# src/team_alchemy/api/routes/assessment.py
+@router.post("/", response_model=Assessment)
+async def create_assessment(
+    assessment: AssessmentCreate,
+    db: Session = Depends(get_db)
+):
+    """Create a new assessment."""
     raise HTTPException(status_code=501, detail="Not implemented")
 
-@router.get("/{team_id}")
-async def get_team(team_id: int, db: Session = Depends(get_db)):
-    """Get team by ID."""
+@router.get("/{assessment_id}", response_model=Assessment)
+async def get_assessment(
+    assessment_id: int,
+    db: Session = Depends(get_db)
+):
+    """Get assessment by ID."""
     raise HTTPException(status_code=501, detail="Not implemented")
 
-@router.post("/{team_id}/members/{user_id}")
-async def add_team_member(team_id: int, user_id: int, db: Session = Depends(get_db)):
-    """Add member to team."""
+@router.post("/{assessment_id}/responses")
+async def submit_response(
+    assessment_id: int,
+    response: ResponseBase,
+    db: Session = Depends(get_db)
+):
+    """Submit a response to an assessment question."""
+    raise HTTPException(status_code=501, detail="Not implemented")
+
+@router.post("/{assessment_id}/calculate")
+async def calculate_results(
+    assessment_id: int,
+    db: Session = Depends(get_db)
+):
+    """Calculate assessment results."""
+    calculator = AssessmentCalculator()
     raise HTTPException(status_code=501, detail="Not implemented")
 
 @router.get("/")
-async def list_teams(db: Session = Depends(get_db)):
-    """List all teams."""
+async def list_assessments(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db)
+):
+    """List all assessments."""
     return []
 ```
 
 ## References
-- [Relevant File](https://github.com/DoctorDoveDragon/Team-Alchemy-APP/blob/main/src/team_alchemy/api/routes/teams.py)
+- [Relevant File](https://github.com/DoctorDoveDragon/Team-Alchemy-APP/blob/main/src/team_alchemy/api/routes/assessment.py)
 
 ### Acceptance Criteria
-- Endpoints must have working implementations and not raise HTTP 501.
-- Database operations and logic must be complete.
-- Unit and integration tests to cover every endpoint.
-- API documentation updated as needed.
-- Follow best practices for dependency injection & error handling.
+- Fully functional endpoints (no HTTP 501 exceptions)
+- All database and business logic implemented for endpoints
+- Unit and integration tests for full coverage
+- Add/update API documentation as needed

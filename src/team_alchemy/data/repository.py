@@ -9,20 +9,32 @@ import os
 
 from team_alchemy.data.models import Base
 
-# Database URL from environment or default to SQLite
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "sqlite:///./team_alchemy.db"
-)
 
-# Create engine
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
-)
+def _get_database_url():
+    """Get database URL from environment or use default."""
+    return os.getenv("DATABASE_URL", "sqlite:///./team_alchemy.db")
 
-# Create session factory
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+def _create_engine_and_session():
+    """Create database engine and session factory."""
+    global engine, SessionLocal
+    
+    database_url = _get_database_url()
+    
+    # Create engine
+    engine = create_engine(
+        database_url,
+        connect_args={"check_same_thread": False} if "sqlite" in database_url else {}
+    )
+    
+    # Create session factory
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    
+    return engine, SessionLocal
+
+
+# Initialize engine and session factory
+engine, SessionLocal = _create_engine_and_session()
 
 
 def get_db() -> Generator[Session, None, None]:
@@ -41,6 +53,14 @@ def get_db() -> Generator[Session, None, None]:
 
 def init_db():
     """Initialize database tables."""
+    global engine, SessionLocal
+    
+    # Recreate engine and session if DATABASE_URL has changed
+    # This handles cases where the environment variable is updated after module import
+    current_url = _get_database_url()
+    if not hasattr(engine, 'url') or str(engine.url) != current_url:
+        engine, SessionLocal = _create_engine_and_session()
+    
     Base.metadata.create_all(bind=engine)
 
 

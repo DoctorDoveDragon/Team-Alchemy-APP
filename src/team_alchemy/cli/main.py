@@ -11,20 +11,17 @@ DEFAULT_MBTI_TYPE = "INTJ"
 DEFAULT_ARCHETYPE = "Analyst"
 
 app = typer.Typer(
-    name="team-alchemy",
-    help="Team Alchemy - Team dynamics and psychology assessment platform"
+    name="team-alchemy", help="Team Alchemy - Team dynamics and psychology assessment platform"
 )
 
 
 @app.command()
-def init(
-    db_url: Optional[str] = typer.Option(None, help="Database URL")
-):
+def init(db_url: Optional[str] = typer.Option(None, help="Database URL")):
     """Initialize the Team Alchemy database."""
     typer.echo("Initializing Team Alchemy database...")
-    
+
     from team_alchemy.data.repository import init_db
-    
+
     try:
         init_db()
         typer.echo("✓ Database initialized successfully!")
@@ -36,7 +33,7 @@ def init(
 @app.command()
 def assess(
     user_id: int = typer.Argument(..., help="User ID to assess"),
-    assessment_type: str = typer.Option("full", help="Assessment type")
+    assessment_type: str = typer.Option("full", help="Assessment type"),
 ):
     """Run an assessment for a user."""
     from team_alchemy.data.repository import SessionLocal
@@ -206,9 +203,7 @@ def assess(
 
 
 @app.command()
-def analyze_team(
-    team_id: int = typer.Argument(..., help="Team ID to analyze")
-):
+def analyze_team(team_id: int = typer.Argument(..., help="Team ID to analyze")):
     """Analyze team dynamics and composition."""
     from team_alchemy.data.repository import SessionLocal
     from team_alchemy.data.models import Team, User, UserProfile, TeamAnalysis
@@ -379,7 +374,7 @@ def analyze_team(
 @app.command()
 def recommend(
     team_id: int = typer.Argument(..., help="Team ID"),
-    max_recommendations: int = typer.Option(5, help="Maximum recommendations")
+    max_recommendations: int = typer.Option(5, help="Maximum recommendations"),
 ):
     """Generate recommendations for a team."""
     from team_alchemy.data.repository import SessionLocal
@@ -564,6 +559,7 @@ def recommend(
 def version():
     """Show version information."""
     from team_alchemy import __version__
+
     typer.echo(f"Team Alchemy version {__version__}")
 
 

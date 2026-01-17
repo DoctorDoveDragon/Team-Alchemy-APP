@@ -45,15 +45,15 @@ function CaseStudiesBrowser() {
   if (loading) {
     return (
       <div className="flex justify-center items-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-mustard-600"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-md p-4">
-        <p className="text-red-800 dark:text-red-200">Error: {error}</p>
+      <div className="bg-crimson-50 dark:bg-crimson-900 border border-crimson-200 dark:border-crimson-700 rounded-md p-4">
+        <p className="text-crimson-800 dark:text-crimson-200">Error: {error}</p>
       </div>
     );
   }
@@ -71,7 +71,7 @@ function CaseStudiesBrowser() {
               <div
                 key={study.id}
                 onClick={() => fetchStudyDetails(study.id)}
-                className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow cursor-pointer hover:shadow-md transition-shadow border-2 border-transparent hover:border-indigo-500"
+                className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow cursor-pointer hover:shadow-md transition-shadow border-2 border-transparent hover:border-mustard-500"
               >
                 <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
                   {study.title}
@@ -80,7 +80,7 @@ function CaseStudiesBrowser() {
                   {study.summary}
                 </p>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 px-2 py-1 rounded">
+                  <span className="text-xs bg-mustard-100 dark:bg-mustard-900 text-mustard-800 dark:text-mustard-200 px-2 py-1 rounded">
                     {study.framework}
                   </span>
                   <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -126,7 +126,7 @@ function CaseStudiesBrowser() {
                   <ul className="space-y-1">
                     {selectedStudy.interventions.map((intervention, index) => (
                       <li key={index} className="flex items-start">
-                        <span className="text-indigo-600 dark:text-indigo-400 mr-2">→</span>
+                        <span className="text-mustard-600 dark:text-mustard-400 mr-2">→</span>
                         <span className="text-gray-700 dark:text-gray-300">{intervention}</span>
                       </li>
                     ))}

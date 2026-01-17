@@ -30,7 +30,7 @@ function MBTISelector({ onSelect, selectedType }) {
             onClick={() => handleSelect(type)}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
               localType === type
-                ? 'bg-indigo-600 text-white'
+                ? 'bg-mustard-600 text-white'
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'
             }`}
           >

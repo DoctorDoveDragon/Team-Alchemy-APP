@@ -37,7 +37,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-mustard-50 via-white to-emerald-50 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto px-4 py-8">
         <header className="text-center mb-12">
           <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4">

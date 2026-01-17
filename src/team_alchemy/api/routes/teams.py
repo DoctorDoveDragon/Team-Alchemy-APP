@@ -2,7 +2,7 @@
 FastAPI routes for team management.
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Body
+from fastapi import APIRouter, HTTPException, Depends
 from typing import List
 from sqlalchemy.orm import Session
 
@@ -14,7 +14,7 @@ router = APIRouter(prefix="/teams", tags=["teams"])
 
 
 @router.post("/", response_model=TeamResponse, status_code=201)
-async def create_team(team: TeamCreate = Body(...), db: Session = Depends(get_db)):
+async def create_team(team: TeamCreate, db: Session = Depends(get_db)):
     """Create a new team."""
     # Create new team instance
     db_team = Team(name=team.name, description=team.description)

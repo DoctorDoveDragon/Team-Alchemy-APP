@@ -15,13 +15,28 @@ def test_init_db_with_sqlite():
         tmp_db_path = tmp.name
     
     try:
-        # Set DATABASE_URL to use temp file
-        os.environ["DATABASE_URL"] = f"sqlite:///{tmp_db_path}"
+        # Save original DATABASE_URL
+        original_db_url = os.environ.get("DATABASE_URL")
         
-        # Re-import to pick up new DATABASE_URL
-        import importlib
+        # Set DATABASE_URL to use temp file
+        db_url = f"sqlite:///{tmp_db_path}"
+        os.environ["DATABASE_URL"] = db_url
+        
+        # Import repository module and recreate engine with new DATABASE_URL
         import team_alchemy.data.repository as repo_module
-        importlib.reload(repo_module)
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import sessionmaker
+        
+        # Dispose of existing engine if it exists
+        if hasattr(repo_module, 'engine') and repo_module.engine is not None:
+            repo_module.engine.dispose()
+        
+        # Recreate engine and session factory with new DATABASE_URL
+        repo_module.engine = create_engine(
+            db_url,
+            connect_args={"check_same_thread": False}
+        )
+        repo_module.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=repo_module.engine)
         
         # Initialize database
         repo_module.init_db()
@@ -41,7 +56,17 @@ def test_init_db_with_sqlite():
             pass
             
     finally:
-        # Cleanup
+        # Cleanup - restore environment and dispose engine
+        if original_db_url:
+            os.environ["DATABASE_URL"] = original_db_url
+        elif "DATABASE_URL" in os.environ:
+            del os.environ["DATABASE_URL"]
+        
+        # Dispose of the engine
+        if hasattr(repo_module, 'engine') and repo_module.engine is not None:
+            repo_module.engine.dispose()
+        
+        # Remove temp database file
         if Path(tmp_db_path).exists():
             Path(tmp_db_path).unlink()
 

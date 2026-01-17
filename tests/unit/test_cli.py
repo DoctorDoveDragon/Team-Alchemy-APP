@@ -30,9 +30,9 @@ def temp_db():
     if hasattr(repository, 'engine') and repository.engine is not None:
         repository.engine.dispose()
 
-    # Recreate engine and session factory with new DATABASE_URL
+    # Recreate engine and session factory with new DATABASE_URL from environment
     repository.engine = create_engine(
-        "sqlite:///:memory:",
+        os.environ["DATABASE_URL"],
         connect_args={"check_same_thread": False}
     )
     repository.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=repository.engine)

@@ -19,9 +19,22 @@ def test_init_db_with_sqlite():
         os.environ["DATABASE_URL"] = f"sqlite:///{tmp_db_path}"
         
         # Re-import to pick up new DATABASE_URL
-        import importlib
         import team_alchemy.data.repository as repo_module
-        importlib.reload(repo_module)
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import sessionmaker
+        
+        # Dispose of existing engine if it exists
+        if hasattr(repo_module, 'engine') and repo_module.engine is not None:
+            repo_module.engine.dispose()
+        
+        # Create new engine with the updated DATABASE_URL
+        repo_module.engine = create_engine(
+            f"sqlite:///{tmp_db_path}",
+            connect_args={"check_same_thread": False}
+        )
+        
+        # Update SessionLocal to use the new engine
+        repo_module.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=repo_module.engine)
         
         # Initialize database
         repo_module.init_db()

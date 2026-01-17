@@ -2,6 +2,7 @@
 Unit tests for CLI commands.
 """
 
+import importlib
 import os
 import tempfile
 import time
@@ -17,16 +18,13 @@ from team_alchemy.data.models import Base, Team, User, UserProfile
 @pytest.fixture
 def temp_db():
     """Create a temporary database for testing."""
-    # Create temporary database file
-    with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
-        tmp_db_path = tmp.name
-
-    # Set up database URL in environment
+    # Set up database URL in environment to use in-memory database
     original_db_url = os.environ.get("DATABASE_URL")
-    os.environ["DATABASE_URL"] = f"sqlite:///{tmp_db_path}"
+    os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 
     # Import repository module after setting environment variable
     from team_alchemy.data import repository
+    importlib.reload(repository)
 
     # Initialize database
     repository.init_db()
@@ -80,16 +78,16 @@ def temp_db():
 
     db.close()
 
-    yield (tmp_db_path, test_user_id, test_team_id)
+    yield (None, test_user_id, test_team_id)  # Changed first element from tmp_db_path to None
 
     # Cleanup
     if original_db_url:
         os.environ["DATABASE_URL"] = original_db_url
     elif "DATABASE_URL" in os.environ:
         del os.environ["DATABASE_URL"]
-
-    if Path(tmp_db_path).exists():
-        Path(tmp_db_path).unlink()
+    
+    # Dispose of the engine to clean up the in-memory database
+    repository.engine.dispose()
 
 
 def test_cli_version():

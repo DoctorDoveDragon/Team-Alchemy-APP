@@ -7,8 +7,6 @@ import tempfile
 import os
 from pathlib import Path
 from typer.testing import CliRunner
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
 from team_alchemy.cli.main import app
 from team_alchemy.data.models import Base, User, UserProfile, Team
@@ -21,26 +19,28 @@ def temp_db():
     with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
         tmp_db_path = tmp.name
     
-    # Set up database
+    # Set up database URL in environment
+    original_db_url = os.environ.get("DATABASE_URL")
     os.environ["DATABASE_URL"] = f"sqlite:///{tmp_db_path}"
     
-    # Re-import to pick up new DATABASE_URL
-    import importlib
-    import team_alchemy.data.repository as repo_module
-    importlib.reload(repo_module)
+    # Import repository module after setting environment variable
+    from team_alchemy.data import repository
     
     # Initialize database
-    repo_module.init_db()
+    repository.init_db()
     
     # Create session for setup
-    engine = create_engine(f"sqlite:///{tmp_db_path}")
-    SessionLocal = sessionmaker(bind=engine)
+    SessionLocal = repository.SessionLocal
     db = SessionLocal()
     
+    # Use unique timestamp-based emails to avoid conflicts
+    import time
+    ts = str(time.time()).replace('.', '')
+    
     # Add test data
-    user1 = User(id=1, email="test1@example.com", name="Test User 1")
-    user2 = User(id=2, email="test2@example.com", name="Test User 2")
-    user3 = User(id=3, email="test3@example.com", name="Test User 3")
+    user1 = User(email=f"test1_{ts}@example.com", name="Test User 1")
+    user2 = User(email=f"test2_{ts}@example.com", name="Test User 2")
+    user3 = User(email=f"test3_{ts}@example.com", name="Test User 3")
     
     db.add(user1)
     db.add(user2)
@@ -49,7 +49,7 @@ def temp_db():
     
     # Add profile for user1
     profile1 = UserProfile(
-        user_id=1,
+        user_id=user1.id,
         jungian_type="INTJ",
         archetype="Analyst",
         trait_scores={"mbti_type": "INTJ"}
@@ -58,7 +58,7 @@ def temp_db():
     
     # Add profile for user2
     profile2 = UserProfile(
-        user_id=2,
+        user_id=user2.id,
         jungian_type="ENFP",
         archetype="Innovator",
         trait_scores={"mbti_type": "ENFP"}
@@ -68,16 +68,25 @@ def temp_db():
     db.commit()
     
     # Create test team
-    team = Team(id=1, name="Test Team", description="A test team")
+    team = Team(name="Test Team", description="A test team")
     team.members.extend([user1, user2, user3])
     db.add(team)
     db.commit()
     
+    # Get IDs for test assertions
+    test_user_id = user1.id
+    test_team_id = team.id
+    
     db.close()
     
-    yield tmp_db_path
+    yield (tmp_db_path, test_user_id, test_team_id)
     
     # Cleanup
+    if original_db_url:
+        os.environ["DATABASE_URL"] = original_db_url
+    elif "DATABASE_URL" in os.environ:
+        del os.environ["DATABASE_URL"]
+    
     if Path(tmp_db_path).exists():
         Path(tmp_db_path).unlink()
 
@@ -93,8 +102,9 @@ def test_cli_version():
 
 def test_cli_assess_user_found(temp_db):
     """Test assess command with existing user."""
+    tmp_db_path, test_user_id, test_team_id = temp_db
     runner = CliRunner()
-    result = runner.invoke(app, ["assess", "1"])
+    result = runner.invoke(app, ["assess", str(test_user_id)])
     
     assert result.exit_code == 0
     assert "Test User 1" in result.stdout
@@ -114,8 +124,13 @@ def test_cli_assess_user_not_found(temp_db):
 
 def test_cli_assess_user_without_profile(temp_db):
     """Test assess command with user that has no profile."""
+    tmp_db_path, test_user_id, test_team_id = temp_db
+    # User 3 has no profile, but we need to find its actual ID
+    # Since it's the 3rd user created, let's use test_user_id + 2
+    user_without_profile_id = test_user_id + 2
+    
     runner = CliRunner()
-    result = runner.invoke(app, ["assess", "3"])
+    result = runner.invoke(app, ["assess", str(user_without_profile_id)])
     
     assert result.exit_code == 0
     assert "Test User 3" in result.stdout
@@ -124,8 +139,9 @@ def test_cli_assess_user_without_profile(temp_db):
 
 def test_cli_analyze_team_found(temp_db):
     """Test analyze_team command with existing team."""
+    tmp_db_path, test_user_id, test_team_id = temp_db
     runner = CliRunner()
-    result = runner.invoke(app, ["analyze-team", "1"])
+    result = runner.invoke(app, ["analyze-team", str(test_team_id)])
     
     assert result.exit_code == 0
     assert "Test Team" in result.stdout
@@ -145,8 +161,9 @@ def test_cli_analyze_team_not_found(temp_db):
 
 def test_cli_recommend_team_found(temp_db):
     """Test recommend command with existing team."""
+    tmp_db_path, test_user_id, test_team_id = temp_db
     runner = CliRunner()
-    result = runner.invoke(app, ["recommend", "1"])
+    result = runner.invoke(app, ["recommend", str(test_team_id)])
     
     assert result.exit_code == 0
     assert "Generating recommendations" in result.stdout
@@ -156,8 +173,9 @@ def test_cli_recommend_team_found(temp_db):
 
 def test_cli_recommend_with_max_limit(temp_db):
     """Test recommend command with max recommendations limit."""
+    tmp_db_path, test_user_id, test_team_id = temp_db
     runner = CliRunner()
-    result = runner.invoke(app, ["recommend", "1", "--max-recommendations", "3"])
+    result = runner.invoke(app, ["recommend", str(test_team_id), "--max-recommendations", "3"])
     
     assert result.exit_code == 0
     assert "3 recommendations generated" in result.stdout or "recommendations generated" in result.stdout

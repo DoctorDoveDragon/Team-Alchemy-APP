@@ -6,6 +6,10 @@ import typer
 from typing import Optional
 import json
 
+# Constants
+DEFAULT_MBTI_TYPE = "INTJ"
+DEFAULT_ARCHETYPE = "Analyst"
+
 app = typer.Typer(
     name="team-alchemy",
     help="Team Alchemy - Team dynamics and psychology assessment platform"
@@ -64,7 +68,7 @@ def assess(
         
         # Default behaviors if no profile data exists
         behaviors = []
-        mbti_type_str = "INTJ"  # Default
+        mbti_type_str = DEFAULT_MBTI_TYPE
         
         if profile and profile.jungian_type:
             mbti_type_str = profile.jungian_type
@@ -251,7 +255,7 @@ def analyze_team(
             profile = db.query(UserProfile).filter(UserProfile.user_id == member.id).first()
             
             # Determine MBTI type
-            mbti_type_str = "INTJ"  # Default
+            mbti_type_str = DEFAULT_MBTI_TYPE
             if profile and profile.jungian_type:
                 mbti_type_str = profile.jungian_type
             elif profile and profile.trait_scores:
@@ -259,7 +263,7 @@ def analyze_team(
                     mbti_type_str = profile.trait_scores['mbti_type']
             
             # Get archetype
-            archetype_name = "Analyst"  # Default
+            archetype_name = DEFAULT_ARCHETYPE
             if profile and profile.archetype:
                 archetype_name = profile.archetype
             else:
@@ -411,7 +415,7 @@ def recommend(
         for member in team.members:
             profile = db.query(UserProfile).filter(UserProfile.user_id == member.id).first()
             
-            mbti_type_str = "INTJ"  # Default
+            mbti_type_str = DEFAULT_MBTI_TYPE
             if profile and profile.jungian_type:
                 mbti_type_str = profile.jungian_type
             elif profile and profile.trait_scores:

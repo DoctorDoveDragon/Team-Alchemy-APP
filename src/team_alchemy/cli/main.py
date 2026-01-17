@@ -5,6 +5,12 @@ Command-line interface for Team Alchemy.
 import typer
 from typing import Optional
 from sqlalchemy.exc import SQLAlchemyError
+from datetime import datetime, timezone
+
+# Constants
+ALL_COGNITIVE_FUNCTIONS = ["Ti", "Te", "Fi", "Fe", "Si", "Se", "Ni", "Ne"]
+DOMINANT_AND_AUXILIARY = 2
+MAX_CASE_STUDY_INTERVENTIONS = 2
 
 app = typer.Typer(
     name="team-alchemy", help="Team Alchemy - Team dynamics and psychology assessment platform"
@@ -199,7 +205,6 @@ def analyze_team(team_id: int = typer.Argument(..., help="Team ID to analyze")):
         JungianAnalyzer,
         assess_collective_unconscious_patterns,
     )
-    from datetime import datetime
 
     typer.echo(f"Analyzing team {team_id}...")
 
@@ -251,7 +256,7 @@ def analyze_team(team_id: int = typer.Argument(..., help="Team ID to analyze")):
 
                         if jungian_profile:
                             for func in jungian_profile.get_function_stack()[
-                                :2
+                                :DOMINANT_AND_AUXILIARY
                             ]:  # Dominant and auxiliary
                                 func_name = func.value
                                 function_coverage[func_name] = (
@@ -332,9 +337,10 @@ def analyze_team(team_id: int = typer.Argument(..., help="Team ID to analyze")):
                 )
 
             # Check for function gaps
-            all_functions = ["Ti", "Te", "Fi", "Fe", "Si", "Se", "Ni", "Ne"]
             missing_functions = [
-                f for f in all_functions if f not in function_coverage or function_coverage[f] == 0
+                f
+                for f in ALL_COGNITIVE_FUNCTIONS
+                if f not in function_coverage or function_coverage[f] == 0
             ]
 
             if "Se" in missing_functions or "Si" in missing_functions:
@@ -359,7 +365,7 @@ def analyze_team(team_id: int = typer.Argument(..., help="Team ID to analyze")):
                 "diversity_score": diversity_score,
                 "function_coverage": function_coverage,
                 "team_size": len(members_with_profiles),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
             analysis = TeamAnalysis(
@@ -467,9 +473,10 @@ def recommend(
                 )
 
             # Priority 2: Address function gaps
-            all_functions = ["Ti", "Te", "Fi", "Fe", "Si", "Se", "Ni", "Ne"]
             missing_functions = [
-                f for f in all_functions if f not in function_coverage or function_coverage[f] == 0
+                f
+                for f in ALL_COGNITIVE_FUNCTIONS
+                if f not in function_coverage or function_coverage[f] == 0
             ]
 
             if "Se" in missing_functions or "Si" in missing_functions:
@@ -536,7 +543,7 @@ def recommend(
             # Add case study based recommendations
             if similar_cases:
                 for case in similar_cases:
-                    interventions = case.interventions[:2]
+                    interventions = case.interventions[:MAX_CASE_STUDY_INTERVENTIONS]
                     recommendations.append(
                         {
                             "priority": "LOW",

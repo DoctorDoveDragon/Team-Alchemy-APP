@@ -137,6 +137,93 @@ def test_cli_assess_user_without_profile(temp_db):
     assert "Assessment completed" in result.stdout
 
 
+def test_cli_assess_default_mbti_warning(temp_db):
+    """Test assess command shows warning when using default MBTI type."""
+    tmp_db_path, test_user_id, test_team_id = temp_db
+    # User 3 has no profile, so it should use default
+    user_without_profile_id = test_user_id + 2
+    
+    runner = CliRunner()
+    result = runner.invoke(app, ["assess", str(user_without_profile_id)])
+    
+    assert result.exit_code == 0
+    assert "Warning: User has no MBTI assessment" in result.stdout
+    assert "Using INTJ as example" in result.stdout
+
+
+def test_cli_assess_type_mbti(temp_db):
+    """Test assess command with MBTI type filter."""
+    tmp_db_path, test_user_id, test_team_id = temp_db
+    runner = CliRunner()
+    result = runner.invoke(app, ["assess", str(test_user_id), "--assessment-type", "mbti"])
+    
+    assert result.exit_code == 0
+    assert "Test User 1" in result.stdout
+    assert "Jungian Profile" in result.stdout
+    assert "INTJ" in result.stdout
+    # Should not show defense mechanisms in MBTI-only assessment
+    assert "Defense Mechanisms" not in result.stdout
+    assert "Assessment completed" in result.stdout
+
+
+def test_cli_assess_type_archetype(temp_db):
+    """Test assess command with archetype type filter."""
+    tmp_db_path, test_user_id, test_team_id = temp_db
+    runner = CliRunner()
+    result = runner.invoke(app, ["assess", str(test_user_id), "--assessment-type", "archetype"])
+    
+    assert result.exit_code == 0
+    assert "Test User 1" in result.stdout
+    assert "Dominant Archetypes" in result.stdout
+    # Should not show Jungian Profile in archetype-only assessment
+    assert "Jungian Profile" not in result.stdout
+    assert "Assessment completed" in result.stdout
+
+
+def test_cli_assess_type_jungian(temp_db):
+    """Test assess command with jungian type filter."""
+    tmp_db_path, test_user_id, test_team_id = temp_db
+    runner = CliRunner()
+    result = runner.invoke(app, ["assess", str(test_user_id), "--assessment-type", "jungian"])
+    
+    assert result.exit_code == 0
+    assert "Test User 1" in result.stdout
+    assert "Jungian Profile" in result.stdout
+    # Should not show archetypes or defense mechanisms in jungian-only assessment
+    assert "Dominant Archetypes" not in result.stdout
+    assert "Defense Mechanisms" not in result.stdout
+    assert "Assessment completed" in result.stdout
+
+
+def test_cli_assess_type_full(temp_db):
+    """Test assess command with full type (default)."""
+    tmp_db_path, test_user_id, test_team_id = temp_db
+    runner = CliRunner()
+    result = runner.invoke(app, ["assess", str(test_user_id), "--assessment-type", "full"])
+    
+    assert result.exit_code == 0
+    assert "Test User 1" in result.stdout
+    assert "Jungian Profile" in result.stdout
+    assert "Dominant Archetypes" in result.stdout
+    assert "Defense Mechanisms" in result.stdout
+    assert "Recommendations" in result.stdout
+    assert "Assessment completed" in result.stdout
+
+
+def test_cli_assess_defense_mechanisms_no_data(temp_db):
+    """Test that defense mechanisms show informative message when no behavioral data."""
+    tmp_db_path, test_user_id, test_team_id = temp_db
+    runner = CliRunner()
+    result = runner.invoke(app, ["assess", str(test_user_id)])
+    
+    assert result.exit_code == 0
+    # Should show informative message instead of fake data
+    assert "No behavioral data available" in result.stdout or "Assessment completed" in result.stdout
+    # Should NOT show fake intellectualization data
+    assert "Intellectualization (frequency: 0.65" not in result.stdout
+
+
+
 def test_cli_analyze_team_found(temp_db):
     """Test analyze_team command with existing team."""
     tmp_db_path, test_user_id, test_team_id = temp_db

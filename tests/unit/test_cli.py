@@ -2,7 +2,6 @@
 Unit tests for CLI commands.
 """
 
-import importlib
 import os
 import tempfile
 import time
@@ -24,7 +23,19 @@ def temp_db():
 
     # Import repository module after setting environment variable
     from team_alchemy.data import repository
-    importlib.reload(repository)
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+
+    # Dispose existing engine if it exists to handle DATABASE_URL change
+    if hasattr(repository, 'engine') and repository.engine:
+        repository.engine.dispose()
+    
+    # Recreate engine with new DATABASE_URL
+    repository.engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False}
+    )
+    repository.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=repository.engine)
 
     # Initialize database
     repository.init_db()

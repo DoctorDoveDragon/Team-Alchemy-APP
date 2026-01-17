@@ -74,6 +74,7 @@ def temp_db():
 
     db.close()
 
+    # Note: First tuple element is None since in-memory databases don't have a file path
     yield (None, test_user_id, test_team_id)
 
     # Cleanup
@@ -188,7 +189,7 @@ def test_cli_recommend_team_not_found(temp_db):
 def test_cli_init_db():
     """Test database initialization command."""
     original_db_url = os.environ.get("DATABASE_URL")
-    
+
     try:
         os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 

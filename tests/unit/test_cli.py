@@ -2,7 +2,6 @@
 Unit tests for CLI commands.
 """
 
-import importlib
 import os
 import tempfile
 import time
@@ -24,7 +23,9 @@ def temp_db():
 
     # Import repository module after setting environment variable
     from team_alchemy.data import repository
-    importlib.reload(repository)
+    # Dispose existing engine if it exists to pick up new DATABASE_URL
+    if hasattr(repository, 'engine') and repository.engine is not None:
+        repository.engine.dispose()
 
     # Initialize database
     repository.init_db()

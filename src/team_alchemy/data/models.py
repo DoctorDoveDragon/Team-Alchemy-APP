@@ -78,3 +78,22 @@ class TeamAnalysis(Base):
     
     # Relationships
     team = relationship("Team", back_populates="analysis")
+
+
+# Import assessment ORM models to register them with Base
+# This must be done after Base is defined to avoid circular imports
+def _import_assessment_models():
+    """Import assessment models to register them with SQLAlchemy Base."""
+    try:
+        from team_alchemy.core.assessment.models import (  # noqa: F401
+            AssessmentORM,
+            QuestionORM,
+            ResponseORM,
+        )
+    except ImportError:
+        # If models can't be imported, continue without them
+        # This prevents circular import issues during initial setup
+        pass
+
+
+_import_assessment_models()

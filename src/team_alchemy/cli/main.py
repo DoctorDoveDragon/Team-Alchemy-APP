@@ -33,6 +33,7 @@ JUNGIAN_POSITIONS = ["Dominant", "Auxiliary", "Tertiary", "Inferior"]
 
 class AssessmentType(str, Enum):
     """Assessment type options."""
+
     FULL = "full"
     MBTI = "mbti"
     ARCHETYPE = "archetype"
@@ -43,7 +44,7 @@ class AssessmentType(str, Enum):
 def get_db_session():
     """Context manager for database sessions with automatic cleanup."""
     from team_alchemy.data.repository import SessionLocal
-    
+
     db = SessionLocal()
     try:
         yield db
@@ -59,24 +60,24 @@ def get_db_session():
         db.close()
 
 
-def get_user_mbti_type(profile: Optional['UserProfile'], warn_if_default: bool = True) -> str:
+def get_user_mbti_type(profile: Optional["UserProfile"], warn_if_default: bool = True) -> str:
     """Extract MBTI type from profile with fallback to default."""
     if profile and profile.jungian_type:
         return profile.jungian_type
-    
+
     if profile and profile.trait_scores:
-        if isinstance(profile.trait_scores, dict) and 'mbti_type' in profile.trait_scores:
-            return profile.trait_scores['mbti_type']
-    
+        if isinstance(profile.trait_scores, dict) and "mbti_type" in profile.trait_scores:
+            return profile.trait_scores["mbti_type"]
+
     if warn_if_default:
         typer.echo("⚠  Warning: User has no MBTI assessment on file.")
         typer.echo(f"   Using {DEFAULT_MBTI_TYPE} as example for demonstration purposes.")
         typer.echo("   Results may not reflect actual personality type.\n")
-    
+
     return DEFAULT_MBTI_TYPE
 
 
-def display_user_info(user: 'User') -> None:
+def display_user_info(user: "User") -> None:
     """Display formatted user information."""
     typer.echo("User Information:")
     typer.echo(f"  ID: {user.id}")
@@ -89,7 +90,7 @@ def display_jungian_profile(mbti_type: str, jungian_profile, mapping: dict) -> N
     typer.echo("Jungian Profile:")
     typer.echo(f"  MBTI Type: {mbti_type}")
     typer.echo("  Function Stack:")
-    
+
     if jungian_profile:
         functions = jungian_profile.get_function_stack()
         for i, func in enumerate(functions):
@@ -104,8 +105,10 @@ def display_archetypes(archetype_patterns: list, mapping: dict) -> None:
     if archetype_patterns:
         for pattern in archetype_patterns[:3]:
             dominant_text = " - Dominant" if pattern.is_dominant() else ""
-            typer.echo(f"  • {pattern.archetype.value.replace('_', ' ').title()} "
-                      f"(strength: {pattern.strength:.2f}){dominant_text}")
+            typer.echo(
+                f"  • {pattern.archetype.value.replace('_', ' ').title()} "
+                f"(strength: {pattern.strength:.2f}){dominant_text}"
+            )
     else:
         if mapping.get("archetype_affinity"):
             for arch in mapping["archetype_affinity"][:2]:
@@ -118,9 +121,11 @@ def display_defense_mechanisms(defense_profiles: list) -> None:
     typer.echo("Defense Mechanisms:")
     if defense_profiles:
         for defense in defense_profiles[:3]:
-            typer.echo(f"  • {defense.mechanism.value.replace('_', ' ').title()} "
-                      f"(frequency: {defense.frequency:.2f}, "
-                      f"adaptiveness: {defense.adaptiveness:.2f})")
+            typer.echo(
+                f"  • {defense.mechanism.value.replace('_', ' ').title()} "
+                f"(frequency: {defense.frequency:.2f}, "
+                f"adaptiveness: {defense.adaptiveness:.2f})"
+            )
     else:
         typer.echo("  • No behavioral data available for defense mechanism analysis")
         typer.echo("    (Provide behavioral observations for detailed results)")
@@ -130,7 +135,7 @@ def display_defense_mechanisms(defense_profiles: list) -> None:
 def display_recommendations(mbti_type: str, mapping: dict) -> None:
     """Display formatted recommendations."""
     typer.echo("Recommendations:")
-    
+
     # MBTI-based recommendations
     if mbti_type in ["INTJ", "INTP"]:
         typer.echo("  • Consider balancing analytical thinking with emotional awareness")
@@ -140,16 +145,18 @@ def display_recommendations(mbti_type: str, mapping: dict) -> None:
         typer.echo("  • Embrace flexibility and openness to new approaches")
     elif mbti_type in ["INFJ", "INFP"]:
         typer.echo("  • Balance idealism with practical considerations")
-    
+
     # Archetype-based recommendations
     if mapping.get("archetype_affinity"):
         primary_archetype = mapping["archetype_affinity"][0]
-        typer.echo(f"  • Work on integrating {primary_archetype.title()} archetype more consciously")
-    
+        typer.echo(
+            f"  • Work on integrating {primary_archetype.title()} archetype more consciously"
+        )
+
     # Shadow work recommendation
     if mapping.get("shadow"):
         typer.echo(f"  • Shadow work: {mapping['shadow']}")
-    
+
     typer.echo()
 
 
@@ -184,36 +191,36 @@ def assess(
     from team_alchemy.core.archetypes.jungian_mapper import JungianMapper, MBTIType
     from team_alchemy.core.psychology.jungian import JungianAnalyzer
     from team_alchemy.core.psychology.freudian import FreudianAnalyzer
-    
+
     logger.info(f"Starting {assessment_type.value} assessment for user {user_id}")
     typer.echo(f"\n✓ Running {assessment_type.value} assessment for User {user_id}...\n")
-    
+
     with get_db_session() as db:
         # Query user from database
         user = db.query(User).filter(User.id == user_id).first()
-        
+
         if not user:
             logger.warning(f"User {user_id} not found")
             typer.echo(f"✗ Error: User {user_id} not found", err=True)
             raise typer.Exit(1)
-        
+
         logger.info(f"Found user: {user.name} ({user.email})")
-        
+
         # Always display user information
         display_user_info(user)
-        
+
         # Get or create user profile
         profile = db.query(UserProfile).filter(UserProfile.user_id == user_id).first()
-        
+
         # Default behaviors if no profile data exists
         behaviors = []
         mbti_type_str = get_user_mbti_type(profile, warn_if_default=True)
-        
+
         # Initialize analyzers
         jungian_mapper = JungianMapper()
         jungian_analyzer = JungianAnalyzer()
         freudian_analyzer = FreudianAnalyzer()
-        
+
         # Get Jungian profile
         try:
             mbti_enum = MBTIType(mbti_type_str.upper())
@@ -221,38 +228,42 @@ def assess(
             logger.error(f"Invalid MBTI type: {mbti_type_str}")
             typer.echo(f"✗ Error: Invalid MBTI type: {mbti_type_str}", err=True)
             raise typer.Exit(1)
-        
+
         jungian_profile = jungian_mapper.get_jungian_profile(mbti_enum)
         mapping = jungian_mapper.type_mappings.get(mbti_enum, {})
-        
+
         # Conditional display based on assessment type
         if assessment_type in [AssessmentType.FULL, AssessmentType.MBTI, AssessmentType.JUNGIAN]:
             display_jungian_profile(mbti_type_str, jungian_profile, mapping)
-        
+
         if assessment_type in [AssessmentType.FULL, AssessmentType.ARCHETYPE]:
             # Identify archetypes
             archetype_patterns = jungian_analyzer.identify_active_archetypes(behaviors, {})
             display_archetypes(archetype_patterns, mapping)
-        
+
         if assessment_type == AssessmentType.FULL:
             # Identify defense mechanisms
             defense_profiles = freudian_analyzer.identify_defenses(behaviors, {})
             display_defense_mechanisms(defense_profiles)
-            
+
             # Generate recommendations
             display_recommendations(mbti_type_str, mapping)
-        
+
         # Save/update profile in database
         if not profile:
             profile = UserProfile(
                 user_id=user_id,
                 jungian_type=mbti_type_str,
-                archetype=mapping.get("archetype_affinity", [""])[0] if mapping.get("archetype_affinity") else "",
+                archetype=(
+                    mapping.get("archetype_affinity", [""])[0]
+                    if mapping.get("archetype_affinity")
+                    else ""
+                ),
                 trait_scores={
                     "mbti_type": mbti_type_str,
                     "strengths": mapping.get("strengths", []),
                     "shadow": mapping.get("shadow", ""),
-                }
+                },
             )
             db.add(profile)
             logger.info(f"Created new profile for user {user_id}")
@@ -263,7 +274,7 @@ def assess(
             profile.trait_scores["mbti_type"] = mbti_type_str
             profile.trait_scores["strengths"] = mapping.get("strengths", [])
             logger.info(f"Updated profile for user {user_id}")
-        
+
         typer.echo("✓ Assessment completed and saved to database\n")
         logger.info(f"Assessment completed successfully for user {user_id}")
 
@@ -274,28 +285,31 @@ def analyze_team(team_id: int = typer.Argument(..., help="Team ID to analyze")):
     from team_alchemy.data.repository import SessionLocal
     from team_alchemy.data.models import Team, User, UserProfile, TeamAnalysis
     from team_alchemy.core.archetypes.jungian_mapper import JungianMapper, MBTIType
-    from team_alchemy.core.psychology.jungian import JungianAnalyzer, assess_collective_unconscious_patterns
+    from team_alchemy.core.psychology.jungian import (
+        JungianAnalyzer,
+        assess_collective_unconscious_patterns,
+    )
     from team_alchemy.core.psychology.freudian import FreudianAnalyzer
-    
+
     logger.info(f"Starting team analysis for team {team_id}")
     typer.echo(f"\n✓ Analyzing Team {team_id}...\n")
-    
+
     with get_db_session() as db:
         # Query team from database
         team = db.query(Team).filter(Team.id == team_id).first()
-        
+
         if not team:
             logger.warning(f"Team {team_id} not found")
             typer.echo(f"✗ Error: Team {team_id} not found", err=True)
             raise typer.Exit(1)
-        
+
         if not team.members:
             logger.warning(f"Team {team_id} has no members")
             typer.echo(f"✗ Error: Team {team_id} has no members", err=True)
             raise typer.Exit(1)
-        
+
         logger.info(f"Found team: {team.name} with {len(team.members)} members")
-        
+
         # Display team information
         typer.echo("Team Information:")
         typer.echo(f"  Name: {team.name}")
@@ -303,24 +317,24 @@ def analyze_team(team_id: int = typer.Argument(..., help="Team ID to analyze")):
         if team.description:
             typer.echo(f"  Description: {team.description}")
         typer.echo()
-        
+
         # Initialize analyzers
         jungian_mapper = JungianMapper()
         jungian_analyzer = JungianAnalyzer()
-        
+
         # Collect member data
         member_data = []
         all_archetypes = []
         mbti_distribution = {}
-        
+
         typer.echo("Members:")
         for member in team.members:
             # Get member profile
             profile = db.query(UserProfile).filter(UserProfile.user_id == member.id).first()
-            
+
             # Determine MBTI type
             mbti_type_str = get_user_mbti_type(profile, warn_if_default=False)
-            
+
             # Get archetype
             archetype_name = DEFAULT_ARCHETYPE
             if profile and profile.archetype:
@@ -334,38 +348,40 @@ def analyze_team(team_id: int = typer.Argument(..., help="Team ID to analyze")):
                         archetype_name = mapping["archetype_affinity"][0]
                 except ValueError:
                     pass
-            
+
             # Display member
             typer.echo(f"  • {member.name} ({mbti_type_str}) - {archetype_name.title()}")
-            
+
             # Track distribution
             mbti_distribution[mbti_type_str] = mbti_distribution.get(mbti_type_str, 0) + 1
-            
+
             # Analyze archetypes
             archetype_patterns = jungian_analyzer.identify_active_archetypes([], {})
             all_archetypes.append(archetype_patterns)
-            
-            member_data.append({
-                "user_id": member.id,
-                "name": member.name,
-                "mbti_type": mbti_type_str,
-                "archetype": archetype_name
-            })
-        
+
+            member_data.append(
+                {
+                    "user_id": member.id,
+                    "name": member.name,
+                    "mbti_type": mbti_type_str,
+                    "archetype": archetype_name,
+                }
+            )
+
         typer.echo()
-        
+
         # Analyze team dynamics
         typer.echo("Team Dynamics:")
-        
+
         # MBTI Distribution
         typer.echo("  MBTI Distribution:")
         for mbti_type, count in sorted(mbti_distribution.items()):
             typer.echo(f"    {mbti_type}: {count}")
-        
+
         # Calculate diversity score
         diversity_score = len(mbti_distribution) / len(team.members) if team.members else 0
         typer.echo(f"  Diversity Score: {diversity_score * 100:.1f}%")
-        
+
         # Balance assessment
         if diversity_score > 0.8:
             balance = "Highly Balanced"
@@ -377,34 +393,38 @@ def analyze_team(team_id: int = typer.Argument(..., help="Team ID to analyze")):
             balance = "Homogeneous"
         typer.echo(f"  Balance: {balance}")
         typer.echo()
-        
+
         # Collective patterns
         if all_archetypes:
             collective = assess_collective_unconscious_patterns(all_archetypes)
-            
+
             typer.echo("Collective Patterns:")
-            typer.echo(f"  • Archetype Diversity: {collective.get('archetype_diversity', 0)} unique archetypes")
-            
-            if collective.get('dominant_pattern'):
-                typer.echo(f"  • Dominant Pattern: {collective['dominant_pattern'].replace('_', ' ').title()}")
-            
+            typer.echo(
+                f"  • Archetype Diversity: {collective.get('archetype_diversity', 0)} unique archetypes"
+            )
+
+            if collective.get("dominant_pattern"):
+                typer.echo(
+                    f"  • Dominant Pattern: {collective['dominant_pattern'].replace('_', ' ').title()}"
+                )
+
             # General patterns based on composition
             typer.echo("  • Strong analytical capability")
-            
+
             # Check for intuition vs sensing balance
-            intuitive_count = sum(1 for m in member_data if m['mbti_type'][1] == 'N')
+            intuitive_count = sum(1 for m in member_data if m["mbti_type"][1] == "N")
             sensing_count = len(member_data) - intuitive_count
             if abs(intuitive_count - sensing_count) <= 1:
                 typer.echo("  • Good balance of intuition and sensing")
-            
+
             # Check for thinking vs feeling balance
-            thinking_count = sum(1 for m in member_data if m['mbti_type'][2] == 'T')
+            thinking_count = sum(1 for m in member_data if m["mbti_type"][2] == "T")
             feeling_count = len(member_data) - thinking_count
             if abs(thinking_count - feeling_count) <= 1:
                 typer.echo("  • Diverse thinking and feeling representation")
-            
+
             typer.echo()
-        
+
         # Save analysis to database
         analysis_results = {
             "mbti_distribution": mbti_distribution,
@@ -413,15 +433,15 @@ def analyze_team(team_id: int = typer.Argument(..., help="Team ID to analyze")):
             "member_count": len(team.members),
             "members": member_data,
         }
-        
+
         team_analysis = TeamAnalysis(
             team_id=team_id,
             analysis_type="comprehensive",
             results=analysis_results,
-            score=diversity_score * 100
+            score=diversity_score * 100,
         )
         db.add(team_analysis)
-        
+
         logger.info(f"Team analysis completed for team {team_id}")
         typer.echo("✓ Analysis completed and saved to database\n")
 
@@ -435,57 +455,62 @@ def recommend(
     from team_alchemy.data.repository import SessionLocal
     from team_alchemy.data.models import Team, User, UserProfile, TeamAnalysis
     from team_alchemy.core.archetypes.jungian_mapper import JungianMapper, MBTIType
-    
+
     logger.info(f"Generating recommendations for team {team_id}")
     typer.echo(f"\n✓ Generating recommendations for Team {team_id}...\n")
-    
+
     with get_db_session() as db:
         # Query team from database
         team = db.query(Team).filter(Team.id == team_id).first()
-        
+
         if not team:
             logger.warning(f"Team {team_id} not found")
             typer.echo(f"✗ Error: Team {team_id} not found", err=True)
             raise typer.Exit(1)
-        
+
         if not team.members:
             logger.warning(f"Team {team_id} has no members")
             typer.echo(f"✗ Error: Team {team_id} has no members", err=True)
             raise typer.Exit(1)
-        
+
         logger.info(f"Found team: {team.name} with {len(team.members)} members")
-        
+
         # Get or create team analysis
-        latest_analysis = db.query(TeamAnalysis).filter(
-            TeamAnalysis.team_id == team_id
-        ).order_by(TeamAnalysis.created_at.desc()).first()
-        
+        latest_analysis = (
+            db.query(TeamAnalysis)
+            .filter(TeamAnalysis.team_id == team_id)
+            .order_by(TeamAnalysis.created_at.desc())
+            .first()
+        )
+
         # Collect member data for analysis
         jungian_mapper = JungianMapper()
         member_data = []
         mbti_distribution = {}
-        
+
         for member in team.members:
             profile = db.query(UserProfile).filter(UserProfile.user_id == member.id).first()
-            
+
             mbti_type_str = get_user_mbti_type(profile, warn_if_default=False)
-            
+
             mbti_distribution[mbti_type_str] = mbti_distribution.get(mbti_type_str, 0) + 1
-            member_data.append({
-                "user_id": member.id,
-                "name": member.name,
-                "mbti_type": mbti_type_str,
-            })
-        
+            member_data.append(
+                {
+                    "user_id": member.id,
+                    "name": member.name,
+                    "mbti_type": mbti_type_str,
+                }
+            )
+
         # Calculate diversity
         diversity_score = len(mbti_distribution) / len(team.members) if team.members else 0
-        
+
         # Generate recommendations
         typer.echo("Team Recommendations:\n")
-        
+
         recommendations = []
         rec_count = 0
-        
+
         # Diversity-based recommendations
         if diversity_score > 0.8:
             rec_count += 1
@@ -505,16 +530,16 @@ def recommend(
             )
             recommendations.append(rec)
             typer.echo(rec + "\n")
-        
+
         if rec_count >= max_recommendations:
             logger.info(f"Generated {rec_count} recommendations for team {team_id}")
             typer.echo(f"\n✓ {rec_count} recommendations generated\n")
             return
-        
+
         # Check for thinking vs feeling balance
-        thinking_count = sum(1 for m in member_data if m['mbti_type'][2] == 'T')
+        thinking_count = sum(1 for m in member_data if m["mbti_type"][2] == "T")
         feeling_count = len(member_data) - thinking_count
-        
+
         if abs(thinking_count - feeling_count) <= 1 and rec_count < max_recommendations:
             rec_count += 1
             rec = (
@@ -533,16 +558,16 @@ def recommend(
             )
             recommendations.append(rec)
             typer.echo(rec + "\n")
-        
+
         if rec_count >= max_recommendations:
             logger.info(f"Generated {rec_count} recommendations for team {team_id}")
             typer.echo(f"\n✓ {rec_count} recommendations generated\n")
             return
-        
+
         # Check for intuition vs sensing balance
-        intuitive_count = sum(1 for m in member_data if m['mbti_type'][1] == 'N')
+        intuitive_count = sum(1 for m in member_data if m["mbti_type"][1] == "N")
         sensing_count = len(member_data) - intuitive_count
-        
+
         if intuitive_count > sensing_count + 2 and rec_count < max_recommendations:
             rec_count += 1
             rec = (
@@ -561,15 +586,15 @@ def recommend(
             )
             recommendations.append(rec)
             typer.echo(rec + "\n")
-        
+
         if rec_count >= max_recommendations:
             logger.info(f"Generated {rec_count} recommendations for team {team_id}")
             typer.echo(f"\n✓ {rec_count} recommendations generated\n")
             return
-        
+
         # Specific type-based recommendations
         type_counts = sorted(mbti_distribution.items(), key=lambda x: x[1], reverse=True)
-        
+
         if type_counts[0][1] > 1 and rec_count < max_recommendations:
             dominant_type = type_counts[0][0]
             rec_count += 1
@@ -580,12 +605,12 @@ def recommend(
             )
             recommendations.append(rec)
             typer.echo(rec + "\n")
-        
+
         if rec_count >= max_recommendations:
             logger.info(f"Generated {rec_count} recommendations for team {team_id}")
             typer.echo(f"\n✓ {rec_count} recommendations generated\n")
             return
-        
+
         # General teamwork recommendation
         if rec_count < max_recommendations:
             rec_count += 1
@@ -596,7 +621,7 @@ def recommend(
             )
             recommendations.append(rec)
             typer.echo(rec + "\n")
-        
+
         logger.info(f"Generated {rec_count} recommendations for team {team_id}")
         typer.echo(f"✓ {rec_count} recommendations generated\n")
 

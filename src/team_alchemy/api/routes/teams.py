@@ -36,6 +36,10 @@ async def create_team(team_data: TeamCreate, db: Session = Depends(get_db)):
     
     return new_team
 
+    # Add to database
+    db.add(db_team)
+    db.commit()
+    db.refresh(db_team)
 
 @router.get("/{team_id}", response_model=TeamResponse)
 async def get_team(team_id: int, db: Session = Depends(get_db)):

@@ -45,15 +45,15 @@ function JungianProfile({ mbtiType }) {
   if (loading) {
     return (
       <div className="flex justify-center items-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-mustard-600"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-md p-4">
-        <p className="text-red-800 dark:text-red-200">Error: {error}</p>
+      <div className="bg-crimson-50 dark:bg-crimson-900 border border-crimson-200 dark:border-crimson-700 rounded-md p-4">
+        <p className="text-crimson-800 dark:text-crimson-200">Error: {error}</p>
       </div>
     );
   }
@@ -65,8 +65,8 @@ function JungianProfile({ mbtiType }) {
   return (
     <div className="jungian-profile space-y-6">
       {/* Header */}
-      <div className="bg-indigo-50 dark:bg-indigo-900 rounded-lg p-4">
-        <h3 className="text-xl font-bold text-indigo-900 dark:text-indigo-100">
+      <div className="bg-mustard-50 dark:bg-mustard-900 rounded-lg p-4">
+        <h3 className="text-xl font-bold text-mustard-900 dark:text-mustard-100">
           {profile.mbti_type} - Jungian Profile
         </h3>
       </div>
@@ -77,21 +77,21 @@ function JungianProfile({ mbtiType }) {
           Cognitive Function Stack
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="bg-blue-50 dark:bg-blue-900 p-3 rounded-md">
-            <p className="text-sm font-medium text-blue-900 dark:text-blue-100">Dominant</p>
-            <p className="text-lg text-blue-800 dark:text-blue-200">{profile.dominant_function}</p>
+          <div className="bg-mustard-50 dark:bg-mustard-900 p-3 rounded-md">
+            <p className="text-sm font-medium text-mustard-900 dark:text-mustard-100">Dominant</p>
+            <p className="text-lg text-mustard-800 dark:text-mustard-200">{profile.dominant_function}</p>
           </div>
-          <div className="bg-green-50 dark:bg-green-900 p-3 rounded-md">
-            <p className="text-sm font-medium text-green-900 dark:text-green-100">Auxiliary</p>
-            <p className="text-lg text-green-800 dark:text-green-200">{profile.auxiliary_function}</p>
+          <div className="bg-emerald-50 dark:bg-emerald-900 p-3 rounded-md">
+            <p className="text-sm font-medium text-emerald-900 dark:text-emerald-100">Auxiliary</p>
+            <p className="text-lg text-emerald-800 dark:text-emerald-200">{profile.auxiliary_function}</p>
           </div>
-          <div className="bg-yellow-50 dark:bg-yellow-900 p-3 rounded-md">
-            <p className="text-sm font-medium text-yellow-900 dark:text-yellow-100">Tertiary</p>
-            <p className="text-lg text-yellow-800 dark:text-yellow-200">{profile.tertiary_function}</p>
+          <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Tertiary</p>
+            <p className="text-lg text-gray-800 dark:text-gray-200">{profile.tertiary_function}</p>
           </div>
-          <div className="bg-red-50 dark:bg-red-900 p-3 rounded-md">
-            <p className="text-sm font-medium text-red-900 dark:text-red-100">Inferior</p>
-            <p className="text-lg text-red-800 dark:text-red-200">{profile.inferior_function}</p>
+          <div className="bg-crimson-50 dark:bg-crimson-900 p-3 rounded-md">
+            <p className="text-sm font-medium text-crimson-900 dark:text-crimson-100">Inferior</p>
+            <p className="text-lg text-crimson-800 dark:text-crimson-200">{profile.inferior_function}</p>
           </div>
         </div>
       </div>
@@ -105,7 +105,7 @@ function JungianProfile({ mbtiType }) {
           {profile.archetype_affinity.map((archetype) => (
             <span
               key={archetype}
-              className="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-full text-sm font-medium"
+              className="px-3 py-1 bg-mustard-100 dark:bg-mustard-900 text-mustard-800 dark:text-mustard-200 rounded-full text-sm font-medium"
             >
               {archetype}
             </span>
@@ -121,7 +121,7 @@ function JungianProfile({ mbtiType }) {
         <ul className="space-y-2">
           {profile.strengths.map((strength, index) => (
             <li key={index} className="flex items-start">
-              <span className="text-green-600 dark:text-green-400 mr-2">✓</span>
+              <span className="text-emerald-600 dark:text-emerald-400 mr-2">✓</span>
               <span className="text-gray-700 dark:text-gray-300">{strength}</span>
             </li>
           ))}
